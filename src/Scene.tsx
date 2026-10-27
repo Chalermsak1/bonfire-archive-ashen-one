@@ -22,6 +22,10 @@ function ArchiveCard({ compact = false, flipped = false }: { compact?: boolean; 
   return (
     <div className={`archive-card${compact ? " archive-card--compact" : ""}`} data-flipped={flipped} aria-hidden="true">
       <div className="archive-card__inner">
+        <span className="archive-card__edge archive-card__edge--left" />
+        <span className="archive-card__edge archive-card__edge--right" />
+        <span className="archive-card__edge archive-card__edge--top" />
+        <span className="archive-card__edge archive-card__edge--bottom" />
         <div className="archive-card__face archive-card__front">
           <div className="archive-card__world" />
           <img className="archive-card__knight" src="/archive/knight.webp" alt="" decoding="async" />
@@ -75,6 +79,8 @@ export function Scene() {
   const [selectedDetail, setSelectedDetail] = useState(0);
   const experienceRef = useRef<HTMLElement>(null);
   const stageWrapRef = useRef<HTMLDivElement>(null);
+  const heroDragRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const ignoreHeroClickRef = useRef(false);
 
   useEffect(() => {
     try {
@@ -161,21 +167,60 @@ export function Scene() {
   }
 
   function moveHeroCard(event: ReactPointerEvent<HTMLButtonElement>) {
-    if (event.pointerType === "touch" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width - 0.5;
     const y = (event.clientY - rect.top) / rect.height - 0.5;
-    event.currentTarget.style.setProperty("--tilt-x", `${(-y * 8).toFixed(2)}deg`);
-    event.currentTarget.style.setProperty("--tilt-y", `${(x * 10).toFixed(2)}deg`);
+    const drag = heroDragRef.current;
+    if (drag) {
+      const deltaX = event.clientX - drag.x;
+      const deltaY = event.clientY - drag.y;
+      if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) drag.moved = true;
+      event.currentTarget.style.setProperty("--orbit-x", `${Math.max(-22, Math.min(22, -deltaY / rect.height * 52)).toFixed(2)}deg`);
+      event.currentTarget.style.setProperty("--orbit-y", `${Math.max(-145, Math.min(145, deltaX / rect.width * 230)).toFixed(2)}deg`);
+      event.currentTarget.dataset.dragging = drag.moved ? "true" : "false";
+    } else if (event.pointerType !== "touch") {
+      event.currentTarget.style.setProperty("--orbit-x", `${(-y * 13).toFixed(2)}deg`);
+      event.currentTarget.style.setProperty("--orbit-y", `${(x * 18).toFixed(2)}deg`);
+    }
     event.currentTarget.style.setProperty("--glint-x", `${((x + 0.5) * 100).toFixed(0)}%`);
     event.currentTarget.style.setProperty("--glint-y", `${((y + 0.5) * 100).toFixed(0)}%`);
   }
 
   function resetHeroCard(event: ReactPointerEvent<HTMLButtonElement>) {
-    event.currentTarget.style.removeProperty("--tilt-x");
-    event.currentTarget.style.removeProperty("--tilt-y");
+    if (heroDragRef.current) return;
+    event.currentTarget.style.removeProperty("--orbit-x");
+    event.currentTarget.style.removeProperty("--orbit-y");
     event.currentTarget.style.removeProperty("--glint-x");
     event.currentTarget.style.removeProperty("--glint-y");
+  }
+
+  function startHeroDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    heroDragRef.current = { x: event.clientX, y: event.clientY, moved: false };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function endHeroDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    const drag = heroDragRef.current;
+    if (drag?.moved) {
+      ignoreHeroClickRef.current = true;
+      window.setTimeout(() => { ignoreHeroClickRef.current = false; }, 0);
+      if (Math.abs(event.clientX - drag.x) > 42) setHeroFlipped((flipped) => !flipped);
+    }
+    heroDragRef.current = null;
+    delete event.currentTarget.dataset.dragging;
+    event.currentTarget.style.removeProperty("--orbit-x");
+    event.currentTarget.style.removeProperty("--orbit-y");
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  }
+
+  function flipHeroCard() {
+    if (ignoreHeroClickRef.current) {
+      ignoreHeroClickRef.current = false;
+      return;
+    }
+    setHeroFlipped((flipped) => !flipped);
   }
 
   return (
@@ -227,7 +272,7 @@ export function Scene() {
               <button className="button button--gold" type="button" onClick={enterExperience}>Explore the card <Arrow /></button>
               <a className="text-link" href="#story">Discover the story <span aria-hidden="true">↓</span></a>
             </div>
-            <p className="hero__load-note"><span aria-hidden="true">✦</span> Interactive 3D loads when you enter</p>
+            <p className="hero__load-note"><span aria-hidden="true">✦</span> The full 3D shrine loads when you enter</p>
             <div className="hero__index" aria-label="Interactive digital collectible, edition one of one">
               <span>INTERACTIVE RELIC</span><span className="hero__index-rule" /><span>EDITION 001 / 001</span>
             </div>
@@ -235,11 +280,11 @@ export function Scene() {
           <div className="hero__art">
             <div className="hero__halo" aria-hidden="true" />
             <div className="hero__card-wrap">
-              <button className="hero__card-button" type="button" aria-pressed={heroFlipped} aria-label={heroFlipped ? "Show the front of The Ashen One card" : "Flip The Ashen One card to reveal its reverse"} onClick={() => setHeroFlipped((flipped) => !flipped)} onPointerMove={moveHeroCard} onPointerLeave={resetHeroCard}>
+              <button className="hero__card-button" type="button" aria-pressed={heroFlipped} aria-label={heroFlipped ? "Show the front of The Ashen One card" : "Flip The Ashen One card to reveal its reverse"} onClick={flipHeroCard} onPointerDown={startHeroDrag} onPointerMove={moveHeroCard} onPointerUp={endHeroDrag} onPointerCancel={endHeroDrag} onPointerLeave={resetHeroCard}>
                 <ArchiveCard flipped={heroFlipped} />
               </button>
             </div>
-            <span className="hero__flip-hint" aria-hidden="true">{heroFlipped ? "CLICK TO RETURN TO THE FRONT" : "CLICK OR TAP THE CARD TO FLIP"} <span>↗</span></span>
+            <span className="hero__flip-hint" aria-hidden="true">{heroFlipped ? "DRAG TO TURN · TAP FOR FRONT" : "DRAG TO TURN · TAP TO FLIP"} <span>↗</span></span>
           </div>
         </section>
 
