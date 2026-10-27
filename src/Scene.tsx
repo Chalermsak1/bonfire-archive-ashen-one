@@ -70,10 +70,11 @@ export function Scene() {
   const [activeSection, setActiveSection] = useState("top");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenAvailable, setFullscreenAvailable] = useState(false);
-  const [heroFlipped, setHeroFlipped] = useState(false);
+  const [heroActive, setHeroActive] = useState(false);
   const [studyFlipped, setStudyFlipped] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState(0);
   const experienceRef = useRef<HTMLElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
   const stageWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -142,11 +143,36 @@ export function Scene() {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (!heroActive || !heroRef.current || !("IntersectionObserver" in window)) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry && !entry.isIntersecting) setHeroActive(false);
+    });
+    observer.observe(heroRef.current);
+    return () => observer.disconnect();
+  }, [heroActive]);
+
   function enterExperience() {
     setMenuOpen(false);
+    setHeroActive(false);
     if (webglAvailable) setActive(true);
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     experienceRef.current?.scrollIntoView({ behavior: reducedMotion ? "instant" : "smooth", block: "start" });
+  }
+
+  function activateHeroScene() {
+    if (!webglAvailable) {
+      enterExperience();
+      return;
+    }
+    if (document.fullscreenElement) void document.exitFullscreen();
+    setActive(false);
+    setHeroActive(true);
+  }
+
+  function activateStage() {
+    setHeroActive(false);
+    setActive(true);
   }
 
   function openFullscreen() {
@@ -214,35 +240,45 @@ export function Scene() {
       </header>
 
       <main id="main">
-        <section className="hero" id="top" aria-labelledby="hero-title">
+        <section className={`hero${heroActive ? " hero--live" : ""}`} id="top" ref={heroRef} aria-labelledby="hero-title">
           <div className="hero__landscape" aria-hidden="true" />
           <div className="hero__veil" aria-hidden="true" />
           <div className="hero__grain" aria-hidden="true" />
           <div className="hero__embers" aria-hidden="true">{Array.from({ length: 14 }, (_, index) => <i key={index} />)}</div>
+          {heroActive && (
+            <div className="hero__live" role="region" aria-label="The Ashen One interactive 3D scene">
+              <DarkSoulsHoloCard variant="ashen-one" />
+              <div className="hero__live-veil" aria-hidden="true" />
+              <div className="hero__live-controls">
+                <span>LIVE 3D SCENE · DRAG TO ROTATE · F TO FLIP</span>
+                <button type="button" onClick={() => setHeroActive(false)}>Close 3D preview <span aria-hidden="true">×</span></button>
+              </div>
+            </div>
+          )}
           <div className="hero__content">
             <div className="eyebrow"><span className="eyebrow__line" /> The Ashen Collection <span className="eyebrow__number">No. 001</span></div>
             <h1 id="hero-title">The <span>Ashen</span><br />One<span className="hero__period">.</span></h1>
             <p className="hero__lead">A relic of ash, light, and memory. Turn it in your hands. Follow the embers. See what remains.</p>
             <div className="hero__actions">
-              <button className="button button--gold" type="button" onClick={enterExperience}>Explore the card <Arrow /></button>
+              <button className="button button--gold" type="button" onClick={heroActive ? enterExperience : activateHeroScene}>{heroActive ? "View full 3D stage" : "Explore the card"} <Arrow /></button>
               <a className="text-link" href="#story">Discover the story <span aria-hidden="true">↓</span></a>
             </div>
-            <p className="hero__load-note"><span aria-hidden="true">✦</span> Interactive 3D loads when you enter</p>
+            <p className="hero__load-note"><span aria-hidden="true">✦</span> {heroActive ? "The original ThreeUI scene is live" : "Interactive 3D loads when you enter"}</p>
             <div className="hero__index" aria-label="Interactive digital collectible, edition one of one">
               <span>INTERACTIVE RELIC</span><span className="hero__index-rule" /><span>EDITION 001 / 001</span>
             </div>
           </div>
-          <div className="hero__art">
+          {!heroActive && <div className="hero__art">
             <div className="hero__halo" aria-hidden="true" />
             <div className="hero__card-wrap">
-              <button className="hero__card-button" type="button" aria-pressed={heroFlipped} aria-label={heroFlipped ? "Show the front of The Ashen One card" : "Flip The Ashen One card to reveal its reverse"} onClick={() => setHeroFlipped((flipped) => !flipped)} onPointerMove={moveHeroCard} onPointerLeave={resetHeroCard}>
-                <ArchiveCard flipped={heroFlipped} />
+              <button className="hero__card-button" type="button" aria-label="Activate the original interactive 3D card in the hero" onClick={activateHeroScene} onPointerMove={moveHeroCard} onPointerLeave={resetHeroCard}>
+                <ArchiveCard />
               </button>
             </div>
-            <span className="hero__flip-hint" aria-hidden="true">{heroFlipped ? "CLICK TO RETURN TO THE FRONT" : "CLICK OR TAP THE CARD TO FLIP"} <span>↗</span></span>
+            <span className="hero__activate-hint" aria-hidden="true">CLICK OR TAP TO AWAKEN IN 3D <span>↗</span></span>
             <span className="hero__art-label hero__art-label--top">A WORLD<br />BETWEEN FLAME<br />AND ASH</span>
             <span className="hero__art-label hero__art-label--bottom">01 — THE RELIC</span>
-          </div>
+          </div>}
           <a className="scroll-cue" href="#story"><span className="scroll-cue__line" /> Scroll to discover</a>
         </section>
 
@@ -283,7 +319,7 @@ export function Scene() {
                     <span className="stage-preview__eyebrow">AN INTERACTIVE 3D RELIC</span>
                     <h3>The flame awaits.</h3>
                     <p>{webglAvailable ? "Turn the card, follow the light, and reveal its hidden face. The 3D scene loads when you enter." : "Your browser cannot open this WebGL scene. Explore the artwork and story below instead."}</p>
-                    {webglAvailable && <button className="button button--gold" type="button" onClick={() => setActive(true)}>Awaken the card <Arrow /></button>}
+                    {webglAvailable && <button className="button button--gold" type="button" onClick={activateStage}>Awaken the card <Arrow /></button>}
                   </div>
                 </div>
               )}
