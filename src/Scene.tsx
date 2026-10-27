@@ -240,10 +240,7 @@ export function Scene() {
               </button>
             </div>
             <span className="hero__flip-hint" aria-hidden="true">{heroFlipped ? "CLICK TO RETURN TO THE FRONT" : "CLICK OR TAP THE CARD TO FLIP"} <span>↗</span></span>
-            <span className="hero__art-label hero__art-label--top">A WORLD<br />BETWEEN FLAME<br />AND ASH</span>
-            <span className="hero__art-label hero__art-label--bottom">01 — THE RELIC</span>
           </div>
-          <a className="scroll-cue" href="#story"><span className="scroll-cue__line" /> Scroll to discover</a>
         </section>
 
         <section className="introduction section-shell" id="story" aria-labelledby="story-title">
