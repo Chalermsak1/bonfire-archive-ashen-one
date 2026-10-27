@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { DarkSoulsHoloCard } from "@designcodeio/threeui";
 import "@designcodeio/threeui/style.css";
 import "./app.css";
@@ -18,17 +18,32 @@ function Arrow({ diagonal = false }: { diagonal?: boolean }) {
   );
 }
 
-function ArchiveCard({ compact = false }: { compact?: boolean }) {
+function ArchiveCard({ compact = false, flipped = false }: { compact?: boolean; flipped?: boolean }) {
   return (
-    <div className={`archive-card${compact ? " archive-card--compact" : ""}`} aria-hidden="true">
-      <div className="archive-card__world" />
-      <img className="archive-card__knight" src="/archive/knight.webp" alt="" decoding="async" />
-      <img className="archive-card__frame" src="/archive/frame.webp" alt="" decoding="async" />
-      <div className="archive-card__name">THE ASHEN ONE</div>
-      <div className="archive-card__footer">LINK THE FIRE</div>
+    <div className={`archive-card${compact ? " archive-card--compact" : ""}`} data-flipped={flipped} aria-hidden="true">
+      <div className="archive-card__inner">
+        <div className="archive-card__face archive-card__front">
+          <div className="archive-card__world" />
+          <img className="archive-card__knight" src="/archive/knight.webp" alt="" decoding="async" />
+          <img className="archive-card__frame" src="/archive/frame.webp" alt="" decoding="async" />
+          <div className="archive-card__shine" />
+          <div className="archive-card__name">THE ASHEN ONE</div>
+          <div className="archive-card__footer">LINK THE FIRE</div>
+        </div>
+        <div className="archive-card__face archive-card__back">
+          <img src="/archive/sigil.webp" alt="" decoding="async" />
+          <span>THE EMBER REMAINS</span>
+        </div>
+      </div>
     </div>
   );
 }
+
+const cardDetails = [
+  { number: "01", title: "Engraved border", text: "A dark frame edged in worn gold gives the artwork the weight of a physical relic." },
+  { number: "02", title: "Layered figure", text: "The figure sits apart from its backdrop, creating parallax as the card turns." },
+  { number: "03", title: "Foil and fire", text: "Highlights travel across the face while the shrine casts a warmer light nearby." },
+];
 
 const craftNotes = [
   {
@@ -55,6 +70,9 @@ export function Scene() {
   const [activeSection, setActiveSection] = useState("top");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenAvailable, setFullscreenAvailable] = useState(false);
+  const [heroFlipped, setHeroFlipped] = useState(false);
+  const [studyFlipped, setStudyFlipped] = useState(false);
+  const [selectedDetail, setSelectedDetail] = useState(0);
   const experienceRef = useRef<HTMLElement>(null);
   const stageWrapRef = useRef<HTMLDivElement>(null);
 
@@ -107,6 +125,23 @@ export function Scene() {
     return () => document.removeEventListener("fullscreenchange", updateFullscreen);
   }, []);
 
+  useEffect(() => {
+    if (!("IntersectionObserver" in window) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const items = document.querySelectorAll<HTMLElement>("[data-reveal]");
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.12 });
+    items.forEach((item) => {
+      item.classList.add("reveal-ready");
+      observer.observe(item);
+    });
+    return () => observer.disconnect();
+  }, []);
+
   function enterExperience() {
     setMenuOpen(false);
     if (webglAvailable) setActive(true);
@@ -123,6 +158,24 @@ export function Scene() {
   function stopExperience() {
     if (document.fullscreenElement === stageWrapRef.current) void document.exitFullscreen();
     setActive(false);
+  }
+
+  function moveHeroCard(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (event.pointerType === "touch" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width - 0.5;
+    const y = (event.clientY - rect.top) / rect.height - 0.5;
+    event.currentTarget.style.setProperty("--tilt-x", `${(-y * 8).toFixed(2)}deg`);
+    event.currentTarget.style.setProperty("--tilt-y", `${(x * 10).toFixed(2)}deg`);
+    event.currentTarget.style.setProperty("--glint-x", `${((x + 0.5) * 100).toFixed(0)}%`);
+    event.currentTarget.style.setProperty("--glint-y", `${((y + 0.5) * 100).toFixed(0)}%`);
+  }
+
+  function resetHeroCard(event: ReactPointerEvent<HTMLButtonElement>) {
+    event.currentTarget.style.removeProperty("--tilt-x");
+    event.currentTarget.style.removeProperty("--tilt-y");
+    event.currentTarget.style.removeProperty("--glint-x");
+    event.currentTarget.style.removeProperty("--glint-y");
   }
 
   return (
@@ -165,6 +218,7 @@ export function Scene() {
           <div className="hero__landscape" aria-hidden="true" />
           <div className="hero__veil" aria-hidden="true" />
           <div className="hero__grain" aria-hidden="true" />
+          <div className="hero__embers" aria-hidden="true">{Array.from({ length: 14 }, (_, index) => <i key={index} />)}</div>
           <div className="hero__content">
             <div className="eyebrow"><span className="eyebrow__line" /> The Ashen Collection <span className="eyebrow__number">No. 001</span></div>
             <h1 id="hero-title">The <span>Ashen</span><br />One<span className="hero__period">.</span></h1>
@@ -180,7 +234,12 @@ export function Scene() {
           </div>
           <div className="hero__art">
             <div className="hero__halo" aria-hidden="true" />
-            <ArchiveCard />
+            <div className="hero__card-wrap">
+              <button className="hero__card-button" type="button" aria-pressed={heroFlipped} aria-label={heroFlipped ? "Show the front of The Ashen One card" : "Flip The Ashen One card to reveal its reverse"} onClick={() => setHeroFlipped((flipped) => !flipped)} onPointerMove={moveHeroCard} onPointerLeave={resetHeroCard}>
+                <ArchiveCard flipped={heroFlipped} />
+              </button>
+            </div>
+            <span className="hero__flip-hint" aria-hidden="true">{heroFlipped ? "CLICK TO RETURN TO THE FRONT" : "CLICK OR TAP THE CARD TO FLIP"} <span>↗</span></span>
             <span className="hero__art-label hero__art-label--top">A WORLD<br />BETWEEN FLAME<br />AND ASH</span>
             <span className="hero__art-label hero__art-label--bottom">01 — THE RELIC</span>
           </div>
@@ -188,11 +247,11 @@ export function Scene() {
         </section>
 
         <section className="introduction section-shell" id="story" aria-labelledby="story-title">
-          <div className="section-heading">
+          <div className="section-heading" data-reveal>
             <span className="section-kicker">01 / The story</span>
             <h2 id="story-title">Some embers<br /><em>refuse to fade.</em></h2>
           </div>
-          <div className="introduction__body">
+          <div className="introduction__body" data-reveal>
             <p className="introduction__opening">A collectible artifact suspended between a fading world and the next spark.</p>
             <p>At its heart is The Ashen One: a holographic card whose engraved border, layered illustration, and changing light invite a closer look. Beside it, a candlelit sword shrine turns a single object into an atmosphere.</p>
             <a className="inline-link" href="#experience">See the relic in motion <Arrow /></a>
@@ -200,7 +259,7 @@ export function Scene() {
         </section>
 
         <section className="experience section-shell" id="experience" ref={experienceRef} aria-labelledby="experience-title">
-          <div className="experience__heading">
+          <div className="experience__heading" data-reveal>
             <div>
               <span className="section-kicker">02 / The relic</span>
               <h2 id="experience-title">Hold the <em>moment.</em></h2>
@@ -251,30 +310,38 @@ export function Scene() {
 
         <section className="anatomy section-shell" id="anatomy" aria-labelledby="anatomy-title">
           <div className="anatomy__visual">
-            <div className="anatomy__card"><ArchiveCard compact /></div>
-            <span className="anatomy__visual-index">ARTIFACT STUDY / FRONT FACE</span>
+            <div className="anatomy__card" data-detail={selectedDetail}>
+              <ArchiveCard compact flipped={studyFlipped} />
+              {!studyFlipped && cardDetails.map((detail, index) => (
+                <button key={detail.number} className={`anatomy__hotspot anatomy__hotspot--${index + 1}${selectedDetail === index ? " is-selected" : ""}`} type="button" aria-label={`Explore ${detail.title}`} aria-pressed={selectedDetail === index} onClick={() => setSelectedDetail(index)}>{detail.number}</button>
+              ))}
+            </div>
+            <span className="anatomy__visual-index">ARTIFACT STUDY / {studyFlipped ? "REVERSE FACE" : "FRONT FACE"}</span>
+            <button className="anatomy__turn" type="button" aria-pressed={studyFlipped} onClick={() => setStudyFlipped((flipped) => !flipped)}><span aria-hidden="true">⟲</span> {studyFlipped ? "Show front" : "Reveal reverse"}</button>
           </div>
-          <div className="anatomy__copy">
+          <div className="anatomy__copy" data-reveal>
             <span className="section-kicker">03 / The details</span>
             <h2 id="anatomy-title">Made to be<br /><em>looked at twice.</em></h2>
-            <p className="anatomy__intro">The front is a portrait. The back holds a quiet emblem. Between them, every shift of light changes the object you see.</p>
+            <p className="anatomy__intro">Choose a detail to inspect the artwork, then turn the card to discover its reverse.</p>
             <div className="detail-list">
-              <div><span>01</span><p><strong>Engraved border</strong><br />A dark frame edged in worn gold gives the artwork the weight of a physical relic.</p></div>
-              <div><span>02</span><p><strong>Layered figure</strong><br />The figure sits apart from its backdrop, creating parallax as the card turns.</p></div>
-              <div><span>03</span><p><strong>Foil and fire</strong><br />Highlights travel across the face while the shrine casts a warmer light nearby.</p></div>
+              {cardDetails.map((detail, index) => (
+                <button type="button" key={detail.number} className={selectedDetail === index && !studyFlipped ? "is-selected" : ""} aria-pressed={selectedDetail === index && !studyFlipped} onClick={() => { setStudyFlipped(false); setSelectedDetail(index); }}>
+                  <span>{detail.number}</span><span><strong>{detail.title}</strong><span>{detail.text}</span></span><span className="detail-list__arrow" aria-hidden="true">↗</span>
+                </button>
+              ))}
             </div>
           </div>
         </section>
 
         <section className="craft section-shell" id="craft" aria-labelledby="craft-title">
-          <div className="craft__intro">
+          <div className="craft__intro" data-reveal>
             <span className="section-kicker">04 / Behind the build</span>
             <h2 id="craft-title">An illusion with<br /><em>something to touch.</em></h2>
             <p>The visual is only part of the experience. The card reacts to gestures, adapts to the viewport, and gives the visitor control over when the 3D scene runs.</p>
           </div>
           <div className="craft-grid">
             {craftNotes.map((note) => (
-              <article className="craft-card" key={note.number}>
+              <article className="craft-card" key={note.number} data-reveal>
                 <span className="craft-card__number">{note.number} / 03</span>
                 <span className="craft-card__symbol" aria-hidden="true">{note.number === "01" ? "◈" : note.number === "02" ? "✧" : "✦"}</span>
                 <h3>{note.title}</h3>

@@ -19,6 +19,9 @@ Run `npm run build` to check TypeScript and create the production site in `dist/
 - Scene loads on request, preserving the original renderer and allowing visitors to stop it
 - Compact mobile hero, current-section navigation, accessible menu controls, and a fullscreen view with visible exit controls
 - Direct GitHub source link in the page for reviewers
+- Click or tap the hero card to reveal its reverse; move the pointer to tilt its preview and catch a light glint
+- Inspect three card details using accessible hotspots or the detail list, and turn the study card over
+- Subtle ember particles and scroll reveals add motion while respecting reduced-motion preferences
 - Responsive layout, keyboard focus states, reduced-motion support, and a static fallback when WebGL2 is unavailable
 - In the scene: move to tilt, drag to rotate, double-click or press F to flip, scroll to zoom, and press R to reset
 
