@@ -4,6 +4,7 @@ import "@designcodeio/threeui/style.css";
 import "./app.css";
 
 const sourceUrl = "https://threeui.com/hero/dark-souls-holo-card";
+const repositoryUrl = "https://github.com/Chalermsak1/bonfire-archive-ashen-one";
 
 function Arrow({ diagonal = false }: { diagonal?: boolean }) {
   return (
@@ -51,8 +52,11 @@ export function Scene() {
   const [active, setActive] = useState(false);
   const [webglAvailable, setWebglAvailable] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("top");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenAvailable, setFullscreenAvailable] = useState(false);
   const experienceRef = useRef<HTMLElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
+  const stageWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
@@ -65,6 +69,44 @@ export function Scene() {
     }
   }, []);
 
+  useEffect(() => {
+    let frame = 0;
+    const updateSection = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const current = ["story", "experience", "craft"].reduce((section, id) => {
+          const top = document.getElementById(id)?.getBoundingClientRect().top ?? Infinity;
+          return top <= window.innerHeight * 0.38 ? id : section;
+        }, "top");
+        setActiveSection(current);
+      });
+    };
+    updateSection();
+    window.addEventListener("scroll", updateSection, { passive: true });
+    window.addEventListener("resize", updateSection);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", updateSection);
+      window.removeEventListener("resize", updateSection);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen]);
+
+  useEffect(() => {
+    const updateFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    setFullscreenAvailable(Boolean(document.fullscreenEnabled));
+    document.addEventListener("fullscreenchange", updateFullscreen);
+    return () => document.removeEventListener("fullscreenchange", updateFullscreen);
+  }, []);
+
   function enterExperience() {
     setMenuOpen(false);
     if (webglAvailable) setActive(true);
@@ -73,9 +115,14 @@ export function Scene() {
   }
 
   function openFullscreen() {
-    if (!stageRef.current) return;
+    if (!stageWrapRef.current) return;
     if (document.fullscreenElement) void document.exitFullscreen();
-    else void stageRef.current.requestFullscreen();
+    else void stageWrapRef.current.requestFullscreen();
+  }
+
+  function stopExperience() {
+    if (document.fullscreenElement === stageWrapRef.current) void document.exitFullscreen();
+    setActive(false);
   }
 
   return (
@@ -87,9 +134,9 @@ export function Scene() {
           <span className="brand__text">BONFIRE <em>ARCHIVE</em></span>
         </a>
         <nav className="desktop-nav" aria-label="Main navigation">
-          <a href="#story">The story</a>
-          <a href="#experience">The relic</a>
-          <a href="#craft">Behind the build</a>
+          <a href="#story" aria-current={activeSection === "story" ? "location" : undefined}>The story</a>
+          <a href="#experience" aria-current={activeSection === "experience" ? "location" : undefined}>The relic</a>
+          <a href="#craft" aria-current={activeSection === "craft" ? "location" : undefined}>Behind the build</a>
         </nav>
         <button className="header-cta" type="button" onClick={enterExperience}>
           Enter the archive <Arrow diagonal />
@@ -105,9 +152,9 @@ export function Scene() {
         </button>
         {menuOpen && (
           <nav className="mobile-nav" id="mobile-navigation" aria-label="Mobile navigation">
-            <a href="#story" onClick={() => setMenuOpen(false)}>The story</a>
-            <a href="#experience" onClick={() => setMenuOpen(false)}>The relic</a>
-            <a href="#craft" onClick={() => setMenuOpen(false)}>Behind the build</a>
+            <a href="#story" aria-current={activeSection === "story" ? "location" : undefined} onClick={() => setMenuOpen(false)}>The story</a>
+            <a href="#experience" aria-current={activeSection === "experience" ? "location" : undefined} onClick={() => setMenuOpen(false)}>The relic</a>
+            <a href="#craft" aria-current={activeSection === "craft" ? "location" : undefined} onClick={() => setMenuOpen(false)}>Behind the build</a>
             <button type="button" onClick={enterExperience}>Enter the archive <Arrow /></button>
           </nav>
         )}
@@ -126,6 +173,7 @@ export function Scene() {
               <button className="button button--gold" type="button" onClick={enterExperience}>Explore the card <Arrow /></button>
               <a className="text-link" href="#story">Discover the story <span aria-hidden="true">↓</span></a>
             </div>
+            <p className="hero__load-note"><span aria-hidden="true">✦</span> Interactive 3D loads when you enter</p>
             <div className="hero__index" aria-label="Interactive digital collectible, edition one of one">
               <span>INTERACTIVE RELIC</span><span className="hero__index-rule" /><span>EDITION 001 / 001</span>
             </div>
@@ -159,12 +207,12 @@ export function Scene() {
             </div>
             <p>Move closer. The surface catches your light, the card follows your hand, and the world answers in embers.</p>
           </div>
-          <div className="stage-wrap">
+            <div className="stage-wrap" ref={stageWrapRef}>
             <div className="stage-toolbar">
-              <span><i className="status-light" aria-hidden="true" /> INTERACTIVE SCENE</span>
+              <span><i className={`status-light${active ? " status-light--live" : ""}`} aria-hidden="true" /> {active ? "SCENE ACTIVE" : "INTERACTIVE SCENE"}</span>
               <span>THE ASHEN ONE / 001</span>
             </div>
-            <div className="experience-stage" ref={stageRef}>
+            <div className="experience-stage">
               {active && webglAvailable ? (
                 <DarkSoulsHoloCard variant="ashen-one" />
               ) : (
@@ -175,7 +223,7 @@ export function Scene() {
                   <div className="stage-preview__copy">
                     <span className="stage-preview__eyebrow">AN INTERACTIVE 3D RELIC</span>
                     <h3>The flame awaits.</h3>
-                    <p>{webglAvailable ? "Enter the scene to turn the card and reveal its hidden face." : "Your browser cannot open this WebGL scene. Explore the artwork and story below instead."}</p>
+                    <p>{webglAvailable ? "Turn the card, follow the light, and reveal its hidden face. The 3D scene loads when you enter." : "Your browser cannot open this WebGL scene. Explore the artwork and story below instead."}</p>
                     {webglAvailable && <button className="button button--gold" type="button" onClick={() => setActive(true)}>Awaken the card <Arrow /></button>}
                   </div>
                 </div>
@@ -184,8 +232,8 @@ export function Scene() {
             <div className="stage-footer">
               <span>RENDERED IN REAL TIME · THREE.JS / WEBGL</span>
               <div className="stage-footer__actions">
-                {active && <button type="button" onClick={() => setActive(false)}>Stop 3D scene</button>}
-                {active && <button type="button" onClick={openFullscreen}>Fullscreen <span aria-hidden="true">↗</span></button>}
+                {active && <button type="button" onClick={stopExperience}>Stop 3D scene</button>}
+                {active && fullscreenAvailable && <button type="button" onClick={openFullscreen}>{isFullscreen ? "Exit fullscreen" : "Fullscreen"} <span aria-hidden="true">↗</span></button>}
               </div>
             </div>
           </div>
@@ -241,6 +289,10 @@ export function Scene() {
             </div>
             <p>The original renderer and embedded assets remain byte exact. This archive is the responsive experience around them.</p>
           </div>
+          <a className="source-link" href={repositoryUrl} target="_blank" rel="noopener noreferrer">
+            <span><small>OPEN SOURCE / PROJECT REPOSITORY</small><strong>Explore the code behind the archive</strong></span>
+            <Arrow diagonal />
+          </a>
         </section>
 
         <section className="closing" aria-labelledby="closing-title">
