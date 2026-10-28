@@ -135,6 +135,79 @@ const craftNotes = [
   },
 ];
 
+function AmbientSound() {
+  const contextRef = useRef<AudioContext | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
+
+  useEffect(() => {
+    const pauseWhenHidden = () => {
+      if (document.hidden && contextRef.current?.state === "running") {
+        void contextRef.current.suspend();
+        setPlaying(false);
+      }
+    };
+    document.addEventListener("visibilitychange", pauseWhenHidden);
+    return () => {
+      document.removeEventListener("visibilitychange", pauseWhenHidden);
+      if (contextRef.current && contextRef.current.state !== "closed") void contextRef.current.close();
+    };
+  }, []);
+
+  async function toggleSound() {
+    try {
+      if (playing && contextRef.current) {
+        await contextRef.current.suspend();
+        setPlaying(false);
+        return;
+      }
+      if (!contextRef.current) {
+        const AudioConstructor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (!AudioConstructor) {
+          setUnavailable(true);
+          return;
+        }
+        const context = new AudioConstructor();
+        contextRef.current = context;
+        const master = context.createGain();
+        master.gain.value = 0.08;
+        master.connect(context.destination);
+        const noise = context.createBuffer(1, context.sampleRate * 2, context.sampleRate);
+        const samples = noise.getChannelData(0);
+        for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
+        const source = context.createBufferSource();
+        source.buffer = noise;
+        source.loop = true;
+        const filter = context.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 420;
+        const noiseGain = context.createGain();
+        noiseGain.gain.value = 0.45;
+        source.connect(filter).connect(noiseGain).connect(master);
+        source.start();
+        const drone = context.createOscillator();
+        drone.type = "sine";
+        drone.frequency.value = 58;
+        const droneGain = context.createGain();
+        droneGain.gain.value = 0.12;
+        drone.connect(droneGain).connect(master);
+        drone.start();
+      }
+      await contextRef.current.resume();
+      setPlaying(contextRef.current.state === "running");
+    } catch {
+      setUnavailable(true);
+      setPlaying(false);
+    }
+  }
+
+  return (
+    <button type="button" aria-pressed={playing} disabled={unavailable} onClick={() => void toggleSound()} title={unavailable ? "Sound is unavailable in this browser" : "Toggle ambient sound"}>
+      <span aria-hidden="true">♫</span> {unavailable ? "Sound unavailable" : playing ? "Sound on" : "Sound off"}
+    </button>
+  );
+}
+
 export function Scene() {
   const [active, setActive] = useState(false);
   const [stageVariant, setStageVariant] = useState<DarkSoulsHoloCardVariant>("ashen-one");
@@ -144,6 +217,10 @@ export function Scene() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenAvailable, setFullscreenAvailable] = useState(false);
   const [heroFlipped, setHeroFlipped] = useState(false);
+  const [lightMode, setLightMode] = useState<"ember" | "moon" | "prism">("ember");
+  const [autoSpin, setAutoSpin] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [heroFullscreen, setHeroFullscreen] = useState(false);
   const [studyFlipped, setStudyFlipped] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState(0);
   const [hearthKindled, setHearthKindled] = useState(true);
@@ -152,6 +229,7 @@ export function Scene() {
   const experienceRef = useRef<HTMLElement>(null);
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
+  const heroArtRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLElement>(null);
   const menuToggleRef = useRef<HTMLButtonElement>(null);
 
@@ -186,6 +264,9 @@ export function Scene() {
           }
         }
         setActiveSection(current);
+        const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0;
+        document.documentElement.style.setProperty("--page-progress", String(progress));
       });
     };
 
@@ -197,6 +278,17 @@ export function Scene() {
       window.removeEventListener("scroll", updateSection);
       window.removeEventListener("resize", updateSection);
     };
+  }, []);
+
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      setReducedMotion(preference.matches);
+      if (preference.matches) setAutoSpin(false);
+    };
+    update();
+    preference.addEventListener("change", update);
+    return () => preference.removeEventListener("change", update);
   }, []);
 
   // Keep keyboard focus inside the mobile menu while it is open.
@@ -229,7 +321,10 @@ export function Scene() {
 
   // Fullscreen change listener
   useEffect(() => {
-    const updateFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    const updateFullscreen = () => {
+      setIsFullscreen(document.fullscreenElement === stageWrapRef.current);
+      setHeroFullscreen(document.fullscreenElement === heroArtRef.current);
+    };
     setFullscreenAvailable(Boolean(document.fullscreenEnabled));
     document.addEventListener("fullscreenchange", updateFullscreen);
     return () => document.removeEventListener("fullscreenchange", updateFullscreen);
@@ -305,6 +400,19 @@ export function Scene() {
       void document.exitFullscreen();
     }
     setActive(false);
+  }
+
+  function flipHero() {
+    setAutoSpin(false);
+    setHeroFlipped((flipped) => !flipped);
+  }
+
+  function toggleHeroFullscreen() {
+    if (document.fullscreenElement === heroArtRef.current) {
+      void document.exitFullscreen().catch(() => {});
+    } else if (heroArtRef.current) {
+      void heroArtRef.current.requestFullscreen().catch(() => {});
+    }
   }
 
   function handleKindleHearth() {
@@ -453,6 +561,7 @@ export function Scene() {
           ref={heroRef}
           onMouseMove={handleHeroMouseMove}
           aria-labelledby="hero-title"
+          data-light={lightMode}
         >
           <div id="top" className="scroll-anchor" />
           <div id="hero" className="scroll-anchor" />
@@ -481,16 +590,35 @@ export function Scene() {
               </div>
               <p className="hero-editorial__note"><span aria-hidden="true">✦</span> An interactive digital collectible</p>
             </div>
-            <div className="hero-editorial__art">
+            <div className="hero-editorial__art" ref={heroArtRef} data-light={lightMode}>
               <div className="hero-editorial__halo" aria-hidden="true" />
               <div className="hero-relic-canvas-wrap">
-                <HeroRelic3D flipped={heroFlipped} onFlip={() => setHeroFlipped((f) => !f)} />
+                <HeroRelic3D flipped={heroFlipped} onFlip={flipHero} lightMode={lightMode} autoSpin={autoSpin} />
               </div>
               <div className="hero-editorial__controls">
                 <span>DRAG TO ROTATE · TAP TO FLIP</span>
-                <button type="button" onClick={() => setHeroFlipped((f) => !f)} aria-pressed={heroFlipped}>
+                <button type="button" onClick={flipHero} aria-pressed={heroFlipped}>
                   <span aria-hidden="true">⟲</span> {heroFlipped ? "Show front" : "Turn card"}
                 </button>
+              </div>
+              <div className="relic-lab" aria-label="Card effects">
+                <div className="relic-lab__lighting" role="group" aria-label="Choose lighting">
+                  <span className="relic-lab__label">LIGHT</span>
+                  {(["ember", "moon", "prism"] as const).map((mode) => (
+                    <button key={mode} type="button" className="relic-lab__mode" aria-pressed={lightMode === mode} disabled={!webglAvailable} onClick={() => setLightMode(mode)}>
+                      <span className={`relic-lab__dot relic-lab__dot--${mode}`} aria-hidden="true" />{mode}
+                    </button>
+                  ))}
+                </div>
+                <div className="relic-lab__actions">
+                  <button type="button" aria-pressed={autoSpin} disabled={reducedMotion || !webglAvailable} title={reducedMotion ? "Auto rotation is unavailable while reduced motion is enabled" : undefined} onClick={() => setAutoSpin((spinning) => !spinning)}>
+                    <span aria-hidden="true">⟳</span> {autoSpin ? "Stop spin" : "Auto spin"}
+                  </button>
+                  {fullscreenAvailable && (
+                    <button type="button" onClick={toggleHeroFullscreen}><ExpandIcon /> {heroFullscreen ? "Exit view" : "Full view"}</button>
+                  )}
+                  <AmbientSound />
+                </div>
               </div>
             </div>
             <div className="hero-editorial__foot"><span>AN INTERACTIVE RELIC</span><span>EDITION 001 / 001</span></div>
@@ -953,6 +1081,8 @@ export function Scene() {
 {`// Production Shader: src/HeroRelic3D.tsx (GLSL Fragment)
 uniform vec3 uLightPos;
 uniform float uTime;
+uniform float uSpectral;
+uniform vec3 uTint;
 varying vec2 vUv;
 varying vec3 vNormal;
 varying vec3 vViewPosition;
@@ -971,8 +1101,7 @@ void main() {
   float angle = dot(normal, viewDir);
   vec3 spectrum = 0.5 + 0.5 * cos(vec3(0.0, 0.33, 0.67) * 6.28318 +
     angle * 3.2 + vUv.y * 2.8 + uTime * 0.2);
-  vec3 antiqueGold = vec3(0.92, 0.78, 0.48);
-  vec3 foil = mix(antiqueGold, spectrum, 0.35) * spec * 1.1;
+  vec3 foil = mix(uTint, spectrum, uSpectral) * spec * 1.1;
 
   // Subtle corner glint hotspot
   vec2 hotspotOrigin = vec2(0.5 + uLightPos.x * 0.1, 0.5 + uLightPos.y * 0.1);

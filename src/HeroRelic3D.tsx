@@ -4,15 +4,21 @@ import * as THREE from "three";
 interface HeroRelic3DProps {
   flipped: boolean;
   onFlip: () => void;
+  lightMode: "ember" | "moon" | "prism";
+  autoSpin: boolean;
   className?: string;
   onFpsUpdate?: (fps: number) => void;
 }
 
-export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: HeroRelic3DProps) {
+export function HeroRelic3D({ flipped, onFlip, lightMode, autoSpin, className = "", onFpsUpdate }: HeroRelic3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fpsCallbackRef = useRef(onFpsUpdate);
   fpsCallbackRef.current = onFpsUpdate;
+  const lightModeRef = useRef(lightMode);
+  const autoSpinRef = useRef(autoSpin);
+  lightModeRef.current = lightMode;
+  autoSpinRef.current = autoSpin;
   const [webglSupported, setWebglSupported] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -216,6 +222,8 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
     const foilUniforms = {
       uLightPos: { value: new THREE.Vector3(0.2, 0.6, 4.2) },
       uTime: { value: 0 },
+      uSpectral: { value: 0.35 },
+      uTint: { value: new THREE.Color("#ebc77a") },
     };
 
     const foilShaderMat = new THREE.ShaderMaterial({
@@ -235,6 +243,8 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
       fragmentShader: `
         uniform vec3 uLightPos;
         uniform float uTime;
+        uniform float uSpectral;
+        uniform vec3 uTint;
         varying vec2 vUv;
         varying vec3 vNormal;
         varying vec3 vViewPosition;
@@ -251,8 +261,7 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
           // Iridescent holographic spectrum with restrained luxury dispersion
           float angle = dot(normal, viewDir);
           vec3 spectrum = 0.5 + 0.5 * cos(vec3(0.0, 0.33, 0.67) * 6.28318 + angle * 3.2 + vUv.y * 2.8 + uTime * 0.2);
-          vec3 antiqueGold = vec3(0.92, 0.78, 0.48);
-          vec3 foil = mix(antiqueGold, spectrum, 0.35) * spec * 1.1;
+          vec3 foil = mix(uTint, spectrum, uSpectral) * spec * 1.1;
 
           // Subtle corner glint hotspot
           float dist = distance(vUv, vec2(0.5 + uLightPos.x * 0.1, 0.5 + uLightPos.y * 0.1));
@@ -422,6 +431,8 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
 
     updateSize();
     window.addEventListener("resize", updateSize);
+    const resizeObserver = new ResizeObserver(updateSize);
+    resizeObserver.observe(container);
 
     // 11. Intersection Observer to PAUSE rendering when off-screen (Battery & GPU preservation)
     let isVisible = true;
@@ -438,6 +449,13 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
     const clock = new THREE.Clock();
     let frameCount = 0;
     let lastFpsTime = performance.now();
+    let spinAngle = 0;
+    const lightPresets = {
+      ember: { key: "#ffb95d", rim: "#d9b878", tint: "#ebc77a", spectral: 0.18 },
+      moon: { key: "#9dcaff", rim: "#94b5e9", tint: "#a9c9f3", spectral: 0.12 },
+      prism: { key: "#ecc7ff", rim: "#9ddbe0", tint: "#e1b7ef", spectral: 0.95 },
+    } as const;
+    let currentLight = "";
 
     const renderLoop = () => {
       animId = requestAnimationFrame(renderLoop);
@@ -455,6 +473,14 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
       const elapsedTime = clock.getElapsedTime();
       const p = physicsRef.current;
       const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (currentLight !== lightModeRef.current) {
+        currentLight = lightModeRef.current;
+        const preset = lightPresets[lightModeRef.current];
+        cursorLight.color.set(preset.key);
+        rimLight.color.set(preset.rim);
+        foilUniforms.uTint.value.set(preset.tint);
+        foilUniforms.uSpectral.value = preset.spectral;
+      }
 
       if (!prefersReducedMotion) {
         // Subtle floating levitation breathing
@@ -471,13 +497,18 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
 
         // Apply rotation to card
         cardGroup.rotation.x = p.currentRotX + p.currentTiltX;
-        cardGroup.rotation.y = p.currentRotY + p.currentTiltY;
+        if (autoSpinRef.current && !dragRef.current.isDragging) {
+          spinAngle += 0.008;
+          if (spinAngle > Math.PI) spinAngle -= Math.PI * 2;
+        }
+        else spinAngle *= 0.92;
+        cardGroup.rotation.y = p.currentRotY + p.currentTiltY + spinAngle;
         cardGroup.rotation.z = floatRotZ;
         cardGroup.position.y = floatY;
 
         // Dynamic Parallax between internal layers:
         // As the card turns, the knight shifts noticeably relative to the frame and ruins
-        const parX = -cardGroup.rotation.y * 0.22;
+        const parX = -Math.sin(cardGroup.rotation.y) * 0.22;
         const parY = cardGroup.rotation.x * 0.18;
         knightPlane.position.x = parX * 1.5;
         knightPlane.position.y = -0.22 + parY * 1.2;
@@ -493,7 +524,7 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
         foilUniforms.uLightPos.value.copy(cursorLight.position);
 
         // Shadow follows card inverse
-        shadowPlane.position.x = -cardGroup.rotation.y * 0.35 + 0.1;
+        shadowPlane.position.x = -Math.sin(cardGroup.rotation.y) * 0.35 + 0.1;
         shadowPlane.position.y = cardGroup.position.y - 0.25 + cardGroup.rotation.x * 0.25;
 
         // Animate floating embers
@@ -526,6 +557,7 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", updateSize);
+      resizeObserver.disconnect();
       observer.disconnect();
 
       // Dispose Three.js resources

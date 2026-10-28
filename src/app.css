@@ -2551,3 +2551,47 @@ html { scroll-padding-top: 84px; }
   .hero-editorial__story { font-size: 9px; letter-spacing: .08em; gap: 8px; }
   .hero-editorial__note { display: none; }
 }
+
+/* Interactive relic lighting and presentation controls */
+.reliquary-header::after {
+  content: ""; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px;
+  background: linear-gradient(90deg, #9a5730, #e9c783); transform: scaleX(var(--page-progress, 0)); transform-origin: left;
+  pointer-events: none;
+}
+.hero-editorial__halo { transition: background .65s ease, border-color .65s ease; }
+.hero-editorial__art[data-light="moon"] .hero-editorial__halo { border-color: rgba(153,191,235,.23); background: radial-gradient(circle, rgba(97,145,213,.2), transparent 65%); }
+.hero-editorial__art[data-light="prism"] .hero-editorial__halo { border-color: rgba(208,159,228,.25); background: radial-gradient(circle, rgba(154,90,177,.21), rgba(75,126,143,.08) 40%, transparent 68%); }
+.hero-monument[data-light="moon"] .hero-monument__hearth-glow { background: radial-gradient(ellipse at 65% 100%, rgba(87,142,219,.2), transparent 70%); }
+.hero-monument[data-light="prism"] .hero-monument__hearth-glow { background: radial-gradient(ellipse at 65% 100%, rgba(164,90,178,.2), transparent 70%); }
+.relic-lab { position: relative; z-index: 2; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; width: min(100%, 420px); margin-top: 12px; padding: 12px; border: 1px solid rgba(212,184,131,.2); background: rgba(8,9,8,.8); backdrop-filter: blur(12px); }
+.relic-lab__lighting, .relic-lab__actions { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.relic-lab__label { margin: 0 6px 0 2px; color: var(--text-muted); font: 600 9px/1 var(--serif); letter-spacing: .14em; }
+.relic-lab button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 8px 9px; border: 1px solid transparent; color: #cfc4b0; font: 600 9px/1.2 var(--serif); letter-spacing: .07em; text-transform: uppercase; transition: color .2s, background .2s, border-color .2s; }
+.relic-lab button:hover { color: #fff0d1; background: rgba(214,184,128,.09); }
+.relic-lab button[aria-pressed="true"] { color: #f6e5c4; border-color: rgba(218,184,122,.5); background: rgba(196,150,78,.14); }
+.relic-lab button:disabled { cursor: not-allowed; opacity: .45; }
+.relic-lab__dot { width: 7px; height: 7px; border-radius: 50%; background: #e5a550; box-shadow: 0 0 9px currentColor; }
+.relic-lab__dot--moon { background: #a5c9f2; color: #a5c9f2; }
+.relic-lab__dot--prism { background: #d6a3e8; color: #d6a3e8; }
+.relic-lab__actions { border-left: 1px solid var(--line-gold); padding-left: 8px; }
+.relic-lab__actions .arrow-icon { width: 14px; height: 14px; }
+.relic-lab__actions button > span { font-size: 16px; line-height: 1; }
+.hero-editorial__art:fullscreen { width: 100%; height: 100%; padding: 20px; overflow: auto; background: radial-gradient(ellipse at center, #1e1a14, #060706 70%); }
+.hero-editorial__art:fullscreen .hero-relic-canvas-wrap { width: min(90vw, 850px); height: min(72vh, 760px); flex: none; }
+.hero-editorial__art:fullscreen .hero-editorial__halo { width: min(76vh, 700px); }
+.hero-editorial__art:fullscreen .hero-editorial__controls, .hero-editorial__art:fullscreen .relic-lab { width: min(90vw, 520px); }
+@media (max-width: 480px) {
+  .relic-lab { gap: 6px; margin-top: 10px; padding: 8px; }
+  .relic-lab__lighting, .relic-lab__actions { flex: 1 1 100%; justify-content: space-between; }
+  .relic-lab__actions { padding: 5px 0 0; border: 0; border-top: 1px solid var(--line-hairline); }
+  .relic-lab__actions button { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-editorial__halo, .relic-lab button { transition: none; }
+}
+.relic-lab__lighting, .relic-lab__actions { flex: 1 1 100%; justify-content: space-between; }
+.relic-lab__actions { padding: 6px 0 0; border-left: 0; border-top: 1px solid var(--line-hairline); }
+.relic-lab__actions button { flex: 1; }
+@media (min-width: 901px) and (max-height: 850px) {
+  .hero-editorial .hero-relic-canvas-wrap { height: clamp(340px, 50vh, 425px); }
+}
