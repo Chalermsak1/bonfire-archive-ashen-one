@@ -2781,3 +2781,46 @@ html { scroll-padding-top: 84px; }
   .echo-exhibit__landscape, .echo-exhibit__figure, .echo-exhibit__story { animation: none; }
   .blueprint-stack__plane, .echo-moments__item, .echo-exhibit__controls button { transition: none; }
 }
+
+/* A curated entry point to the two original shrine variants. */
+.relic-collection { position: relative; overflow: hidden; padding: clamp(85px, 10vw, 150px) clamp(24px, 6.5vw, 100px); background: radial-gradient(ellipse at 75% 20%, rgba(132,75,34,.12), transparent 48%), #0d0f0d; border-bottom: 1px solid var(--line-hairline); scroll-margin-top: 80px; }
+.relic-collection__inner { max-width: 1440px; margin: auto; }
+.collection-heading { display: flex; align-items: end; justify-content: space-between; gap: 40px; margin-bottom: 45px; }
+.collection-eyebrow, .collection-relic__content > p:first-child, .build-case__header > p, .build-case__grid article > span { color: #d3ab72; font: 600 10px/1.5 var(--serif); letter-spacing: .19em; }
+.collection-heading h2, .build-case__header h3 { margin: 14px 0 0; color: #f5ecdc; font: 400 clamp(42px, 5vw, 74px)/1.05 var(--reading); }
+.collection-heading h2 em, .build-case__header h3 em { color: #d9b982; font-weight: 400; }
+.collection-heading > p { max-width: 390px; margin: 0 0 4px; color: #c4b9a8; font: 18px/1.6 var(--reading); }
+.collection-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.collection-relic { display: grid; grid-template-columns: 47% 53%; min-height: 330px; border: 1px solid rgba(216,179,119,.25); background: #111310; overflow: hidden; transition: border-color .35s, transform .35s; }
+.collection-relic:hover { border-color: rgba(234,189,116,.7); transform: translateY(-5px); }
+.collection-relic__art { position: relative; overflow: hidden; background: #201d19; }
+.collection-relic__art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 35%, #111310 100%), linear-gradient(0deg, rgba(0,0,0,.5), transparent 45%); }
+.collection-relic__art img { position: absolute; height: 100%; width: 100%; object-fit: cover; transition: transform .7s ease; }
+.collection-relic__art .collection-relic__subject { object-fit: contain; object-position: center bottom; transform: scale(1.15); }
+.collection-relic:hover .collection-relic__subject { transform: scale(1.22); }
+.collection-relic__art span { position: absolute; z-index: 1; top: 20px; left: 20px; color: #f0d4a0; font: 600 9px/1 var(--serif); letter-spacing: .15em; }
+.collection-relic__content { padding: 34px clamp(20px, 2.5vw, 38px) 30px 12px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+.collection-relic__content h3 { color: #f5ecdc; font: 400 clamp(29px, 2.5vw, 40px)/1.1 var(--reading); margin: 16px 0; }
+.collection-relic__content > p:not(:first-child) { color: #c7bbaa; font: 16px/1.6 var(--reading); margin: 0 0 22px; }
+.collection-relic__content button, .story-next { display: inline-flex; gap: 14px; align-items: center; min-height: 46px; color: #efd29a; border-bottom: 1px solid #a38255; font: 600 10px/1.3 var(--serif); letter-spacing: .1em; text-transform: uppercase; }
+.collection-relic__content button:hover, .story-next:hover { color: #fff0d1; border-color: #efd29a; }
+.collection-relic__content button .arrow-icon, .story-next .arrow-icon { width: 17px; height: 17px; }
+.collection-footnote { color: #a99b84; margin: 25px 0 0; font: 600 9px/1.5 var(--serif); letter-spacing: .14em; }
+.collection-footnote span { color: #d3ab72; }
+.story-next { margin: 24px auto 0; display: flex; width: fit-content; }
+.workbench-comparison { z-index: 2; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); align-items: center; gap: 12px; }
+.workbench-comparison figure { min-width: 0; margin: 0; }
+.workbench-comparison figcaption { color: #d8c4a4; text-align: center; margin-top: 14px; font: 600 9px/1.4 var(--serif); letter-spacing: .12em; }
+.workbench-tools { flex-wrap: wrap; }
+.workbench-tool { flex: 1 1 130px; }
+.workbench-tool:disabled { opacity: .5; cursor: not-allowed; }
+.build-case { margin: 65px 0 38px; padding: clamp(28px, 4vw, 55px); border: 1px solid rgba(216,179,119,.2); background: linear-gradient(140deg, rgba(120,82,42,.12), transparent 55%), #101210; }
+.build-case__header h3 { font-size: clamp(34px, 3vw, 48px); }
+.build-case__header > span { display: block; color: #c4b9a8; margin-top: 12px; font: 17px/1.5 var(--reading); }
+.build-case__grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 25px; margin-top: 38px; }
+.build-case__grid article { border-top: 1px solid rgba(216,179,119,.3); padding-top: 22px; }
+.build-case__grid h4 { color: #f1e6d4; margin: 12px 0; font: 400 25px/1.2 var(--reading); }
+.build-case__grid article p { color: #c4b9a8; margin: 0; font: 16px/1.65 var(--reading); }
+@media (max-width: 1000px) { .collection-grid { grid-template-columns: 1fr; } .collection-relic { min-height: 290px; } }
+@media (max-width: 600px) { .collection-heading { display: block; } .collection-heading > p { margin-top: 18px; } .collection-relic { grid-template-columns: 1fr; } .collection-relic__art { min-height: 260px; } .collection-relic__art::after { background: linear-gradient(0deg,#111310, transparent 45%); } .collection-relic__content { padding: 12px 24px 28px; } .build-case__grid { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .collection-relic, .collection-relic__art img { transition: none; } .collection-relic:hover, .collection-relic:hover .collection-relic__subject { transform: none; } }

@@ -231,6 +231,7 @@ export function Scene() {
   const [studyFlipped, setStudyFlipped] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState(0);
   const [studyZoomed, setStudyZoomed] = useState(false);
+  const [studyCompare, setStudyCompare] = useState(false);
   const [hearthKindled, setHearthKindled] = useState(true);
   const [kindlePulse, setKindlePulse] = useState(false);
 
@@ -275,7 +276,7 @@ export function Scene() {
     const updateSection = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        const sections = ["chronicle", "story", "sanctuary", "experience", "anatomy", "foundry", "craft"];
+        const sections = ["collection", "chronicle", "story", "sanctuary", "experience", "anatomy", "foundry", "craft"];
         let current = "top";
         for (const id of sections) {
           const el = document.getElementById(id);
@@ -411,6 +412,11 @@ export function Scene() {
     experienceRef.current?.scrollIntoView({ behavior: reducedMotion ? "instant" : "smooth", block: "start" });
   }
 
+  function openRelic(variant: DarkSoulsHoloCardVariant) {
+    setStageVariant(variant);
+    enterExperience();
+  }
+
   function openFullscreen() {
     if (!stageWrapRef.current) return;
     if (document.fullscreenElement) {
@@ -485,6 +491,7 @@ export function Scene() {
 
           {/* Desktop Museum Navigation Bar */}
           <nav className="reliquary-nav" aria-label="Primary navigation">
+            <a href="#collection" className={`reliquary-nav__link${activeSection === "collection" ? " is-active" : ""}`} aria-current={activeSection === "collection" ? "location" : undefined}>Collection</a>
             <a
               href="#chronicle"
               className={`reliquary-nav__link${activeSection === "chronicle" || activeSection === "story" ? " is-active" : ""}`}
@@ -561,6 +568,7 @@ export function Scene() {
             </button>
           </div>
           <div className="mobile-nav-drawer__links">
+            <a href="#collection" onClick={() => setMenuOpen(false)}><span className="mobile-nav-drawer__roman">✦</span><span>The collection</span></a>
             <a href="#chronicle" onClick={() => setMenuOpen(false)}>
               <span className="mobile-nav-drawer__roman">I</span>
               <span>The story</span>
@@ -585,7 +593,7 @@ export function Scene() {
         </nav>
       )}
 
-      <main id="main">
+      <main id="main" tabIndex={-1}>
         {/* ====================================================================
             2. HERO SECTION — MONUMENTAL CENTRAL ALTAR ARCHITECTURE
             ==================================================================== */}
@@ -676,6 +684,26 @@ export function Scene() {
           </a>
         </nav>
 
+        <section className="relic-collection" id="collection" aria-labelledby="collection-title">
+          <div className="relic-collection__inner">
+            <div className="collection-heading" data-reveal>
+              <div><p className="collection-eyebrow">✦ &nbsp; THE ARCHIVE / 002 RELICS</p><h2 id="collection-title">Two tales. <em>One flame.</em></h2></div>
+              <p>Choose a relic and step into its world. Each opens an interactive ThreeUI shrine for you to explore.</p>
+            </div>
+            <div className="collection-grid">
+              <article className="collection-relic" data-reveal>
+                <div className="collection-relic__art collection-relic__art--ash" aria-hidden="true"><img className="collection-relic__scene" src="/archive/ruins.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/knight.webp" alt="" loading="lazy" decoding="async" /><span>01 / ASH</span></div>
+                <div className="collection-relic__content"><p>THE UNKINDLED · NO. 001</p><h3>The Ashen One</h3><p>An ember endures among the ruins. Discover the champion and the gilded relic that holds their story.</p><button type="button" onClick={() => openRelic("ashen-one")}>Explore The Ashen One <Arrow diagonal /></button></div>
+              </article>
+              <article className="collection-relic collection-relic--cinder" data-reveal>
+                <div className="collection-relic__art collection-relic__art--cinder" aria-hidden="true"><img className="collection-relic__scene" src="/archive/cindermane/background.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/cindermane/subject.webp" alt="" loading="lazy" decoding="async" /><span>02 / CINDER</span></div>
+                <div className="collection-relic__content"><p>THE BLAZING RELIC · NO. 002</p><h3>Cindermane</h3><p>A different relic burns within the archive. Enter a second scene forged in flame and shadow.</p><button type="button" onClick={() => openRelic("cindermane")}>Explore Cindermane <Arrow diagonal /></button></div>
+              </article>
+            </div>
+            <p className="collection-footnote">TWO RELICS &nbsp; / &nbsp; SELECT ONE TO ENTER THE SHRINE <span aria-hidden="true">↗</span></p>
+          </div>
+        </section>
+
         {/* ====================================================================
             3. SECTION 01 — THE ILLUMINATED ARCHAEOLOGICAL CODEX (CHRONICLE)
             ==================================================================== */}
@@ -723,6 +751,7 @@ export function Scene() {
                 </button>
               ))}
             </div>
+            <button className="story-next" type="button" onClick={enterExperience}>Continue to the shrine <Arrow diagonal /></button>
           </div>
         </section>
 
@@ -819,7 +848,7 @@ export function Scene() {
                       <ArchiveCard compact />
                     </div>
                     <div className="vault-dormant-altar__content">
-                      <span className="vault-dormant-altar__kicker">RELIQUARY CHAMBER</span>
+                      <span className="vault-dormant-altar__kicker">{stageVariant === "cindermane" ? "CINDERMANE SELECTED · ASHEN ONE PREVIEW" : "RELIQUARY CHAMBER"}</span>
                       <h3>The hearth awaits your spark.</h3>
                       <p>
                         {webglAvailable
@@ -897,7 +926,9 @@ export function Scene() {
               <div className="workbench-dossier" data-reveal>
                 <div className="workbench-dossier__badge">CURATORIAL REPORT</div>
                 <div className="workbench-dossier__card" aria-live="polite" aria-atomic="true">
-                  {studyFlipped ? (
+                  {studyCompare ? (
+                    <div className="dossier-entry" key="comparison"><div className="dossier-entry__header"><span className="dossier-entry__tag">SIDE BY SIDE</span><span className="dossier-entry__index">TWO FACES</span></div><h3 className="dossier-entry__title">A relic, both sides.</h3><p className="dossier-entry__desc">Compare the gilded portrait with the quiet sigil on its reverse. Select a detail to return to the close-up view.</p><div className="dossier-entry__meta"><span>LEFT: FRONT</span><span>RIGHT: REVERSE</span></div></div>
+                  ) : studyFlipped ? (
                     <div className="dossier-entry dossier-entry--sigil" key="reverse">
                       <div className="dossier-entry__header">
                         <span className="dossier-entry__tag">REVERSE ARTIFACT SEAL</span>
@@ -932,7 +963,7 @@ export function Scene() {
                 <button
                   type="button"
                   className="workbench-turntable-btn"
-                  onClick={() => setStudyFlipped((f) => !f)}
+                  onClick={() => { setStudyCompare(false); setStudyFlipped((f) => !f); }}
                   aria-pressed={studyFlipped}
                 >
                   <span className="workbench-turntable-btn__icon" aria-hidden="true">⟲</span>
@@ -961,7 +992,7 @@ export function Scene() {
                     <span className="workbench-coord workbench-coord--br">VIEW: {studyZoomed ? "1.45×" : "1×"}</span>
                   </div>
 
-                  <div className="workbench-card-housing">
+                  {studyCompare ? <div className="workbench-comparison" aria-label="Front and reverse of The Ashen One card"><figure><ArchiveCard compact /><figcaption>FRONT / PORTRAIT</figcaption></figure><figure><ArchiveCard compact flipped /><figcaption>REVERSE / SIGIL</figcaption></figure></div> : <div className="workbench-card-housing">
                     <ArchiveCard compact flipped={studyFlipped} highlightIndex={studyFlipped ? undefined : selectedDetail} />
                     {!studyFlipped && <span className="workbench-focus-halo" key={selectedDetail} aria-hidden="true" />}
 
@@ -981,13 +1012,14 @@ export function Scene() {
                           <span className="reticle-pin__num">{detail.number}</span>
                         </button>
                       ))}
-                  </div>
+                  </div>}
                 </div>
                 <div className="workbench-tools" role="group" aria-label="Card view controls">
-                  <button type="button" className="workbench-tool" aria-pressed={studyZoomed} onClick={() => setStudyZoomed((zoomed) => !zoomed)}>
+                  <button type="button" className="workbench-tool" aria-pressed={studyZoomed} disabled={studyCompare} onClick={() => setStudyZoomed((zoomed) => !zoomed)}>
                     <span aria-hidden="true">{studyZoomed ? "−" : "+"}</span> {studyZoomed ? "Show full card" : "Zoom selected detail"}
                   </button>
-                  <button type="button" className="workbench-tool workbench-tool--reset" onClick={() => { setStudyZoomed(false); setStudyFlipped(false); setSelectedDetail(0); }}>
+                  <button type="button" className="workbench-tool" aria-pressed={studyCompare} onClick={() => { setStudyZoomed(false); setStudyCompare((value) => !value); }}><span aria-hidden="true">◫</span> {studyCompare ? "Exit comparison" : "Compare faces"}</button>
+                  <button type="button" className="workbench-tool workbench-tool--reset" onClick={() => { setStudyZoomed(false); setStudyFlipped(false); setStudyCompare(false); setSelectedDetail(0); }}>
                     <span aria-hidden="true">↺</span> Reset view
                   </button>
                 </div>
@@ -1002,9 +1034,10 @@ export function Scene() {
                     <button
                       key={detail.number}
                       type="button"
-                        className={`focal-item${!studyFlipped && selectedDetail === index ? " is-selected" : ""}`}
-                      aria-pressed={!studyFlipped && selectedDetail === index}
+                        className={`focal-item${!studyCompare && !studyFlipped && selectedDetail === index ? " is-selected" : ""}`}
+                      aria-pressed={!studyCompare && !studyFlipped && selectedDetail === index}
                       onClick={() => {
+                        setStudyCompare(false);
                         setStudyFlipped(false);
                         setSelectedDetail(index);
                       }}
@@ -1020,9 +1053,9 @@ export function Scene() {
 
                   <button
                     type="button"
-                    className={`focal-item focal-item--sigil${studyFlipped ? " is-selected" : ""}`}
-                    aria-pressed={studyFlipped}
-                    onClick={() => setStudyFlipped(true)}
+                    className={`focal-item focal-item--sigil${!studyCompare && studyFlipped ? " is-selected" : ""}`}
+                    aria-pressed={!studyCompare && studyFlipped}
+                    onClick={() => { setStudyCompare(false); setStudyFlipped(true); }}
                   >
                     <div className="focal-item__num">✦</div>
                     <div className="focal-item__body">
@@ -1156,6 +1189,15 @@ void main() {
                   </pre>
                 </div>
                 </details>
+              </div>
+            </div>
+
+            <div className="build-case" data-reveal>
+              <div className="build-case__header"><p>THE MAKING OF THE ARCHIVE</p><h3>From source to <em>experience.</em></h3><span>A closer look at the decisions behind the project.</span></div>
+              <div className="build-case__grid">
+                <article><span>01 / FOUNDATION</span><h4>Respect the original</h4><p>The interactive shrine uses the registered ThreeUI component and its original HTML sources. The Ashen One remains the default; Cindermane is an optional second variant.</p></article>
+                <article><span>02 / INTEGRATION</span><h4>Build a world around it</h4><p>React and TypeScript bring together a layered Three.js hero, a chapter-based story, and an interactive inspection workbench.</p></article>
+                <article><span>03 / DESIGN DECISIONS</span><h4>Depth with intention</h4><p>The shrine loads on request, the hero pauses when off screen, and motion-sensitive visitors receive a quieter experience. The shrine requires WebGL and an internet connection for its external assets.</p></article>
               </div>
             </div>
 

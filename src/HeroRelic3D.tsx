@@ -436,21 +436,24 @@ export function HeroRelic3D({ flipped, onFlip, lightMode, autoSpin, onReady, cla
 
     updateSize();
     window.addEventListener("resize", updateSize);
-    const resizeObserver = new ResizeObserver(updateSize);
-    resizeObserver.observe(container);
+    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateSize);
+    resizeObserver?.observe(container);
 
     // 11. Intersection Observer to PAUSE rendering when off-screen (Battery & GPU preservation)
     let isVisible = true;
-    const observer = new IntersectionObserver(
+    let disposed = false;
+    let animId = 0;
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const observer = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver(
       ([entry]) => {
         isVisible = entry?.isIntersecting ?? true;
+        syncRendering();
       },
       { rootMargin: "60px" }
     );
-    observer.observe(container);
+    observer?.observe(container);
 
     // 12. Main 60 FPS Physics & Render Loop
-    let animId = 0;
     const clock = new THREE.Clock();
     let frameCount = 0;
     let lastFpsTime = performance.now();
@@ -463,8 +466,8 @@ export function HeroRelic3D({ flipped, onFlip, lightMode, autoSpin, onReady, cla
     let currentLight = "";
 
     const renderLoop = () => {
-      animId = requestAnimationFrame(renderLoop);
-      if (!isVisible) return;
+      animId = 0;
+      if (disposed || !isVisible || document.hidden) return;
 
       frameCount++;
       const now = performance.now();
@@ -477,7 +480,7 @@ export function HeroRelic3D({ flipped, onFlip, lightMode, autoSpin, onReady, cla
 
       const elapsedTime = clock.getElapsedTime();
       const p = physicsRef.current;
-      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const prefersReducedMotion = motionPreference.matches;
       if (currentLight !== lightModeRef.current) {
         currentLight = lightModeRef.current;
         const preset = lightPresets[lightModeRef.current];
@@ -554,16 +557,28 @@ export function HeroRelic3D({ flipped, onFlip, lightMode, autoSpin, onReady, cla
       }
 
       renderer.render(scene, camera);
+      syncRendering();
     };
 
-    renderLoop();
+    function syncRendering() {
+      if (disposed || !isVisible || document.hidden) {
+        if (animId) cancelAnimationFrame(animId);
+        animId = 0;
+        return;
+      }
+      if (!animId) animId = requestAnimationFrame(renderLoop);
+    }
+    document.addEventListener("visibilitychange", syncRendering);
+    syncRendering();
 
     // Cleanup on unmount
     return () => {
+      disposed = true;
       cancelAnimationFrame(animId);
+      document.removeEventListener("visibilitychange", syncRendering);
       window.removeEventListener("resize", updateSize);
-      resizeObserver.disconnect();
-      observer.disconnect();
+      resizeObserver?.disconnect();
+      observer?.disconnect();
 
       // Dispose Three.js resources
       renderer.dispose();
@@ -576,6 +591,15 @@ export function HeroRelic3D({ flipped, onFlip, lightMode, autoSpin, onReady, cla
       backTextTex.dispose();
       shadowTex.dispose();
       particleTex.dispose();
+      const materials = new Set<THREE.Material>();
+      scene.traverse((object) => {
+        if (object instanceof THREE.Mesh || object instanceof THREE.Points) {
+          object.geometry.dispose();
+          const objectMaterials = Array.isArray(object.material) ? object.material : [object.material];
+          objectMaterials.forEach((material) => materials.add(material));
+        }
+      });
+      materials.forEach((material) => material.dispose());
       scene.clear();
     };
   }, []);

@@ -15,15 +15,29 @@ Run `npm run build` to check TypeScript and create the production site in `dist/
 
 ## Experience
 
-- Editorial introduction, interactive relic, artifact details, and build notes
-- Scene loads on request, preserving the original renderer and allowing visitors to stop it
-- Compact mobile hero, current-section navigation, accessible menu controls, and a fullscreen view with visible exit controls
-- Direct GitHub source link in the page for reviewers
-- Click or tap the hero card to reveal its reverse; move the pointer to tilt its preview and catch a light glint
-- Inspect three card details using accessible hotspots or the detail list, and turn the study card over
-- Subtle ember particles and scroll reveals add motion while respecting reduced-motion preferences
-- Responsive layout, keyboard focus states, reduced-motion support, and a static fallback when WebGL2 is unavailable
-- In the scene: move to tilt, drag to rotate, double-click or press F to flip, scroll to zoom, and press R to reset
+- Explore a two-relic collection and enter either The Ashen One or Cindermane shrine. The original Ashen One is selected by default.
+- Turn the real-time Three.js hero, choose its lighting, and optionally enable ambient sound. The interactive chronicle lets visitors explore three chapters at their own pace.
+- Inspect three details of The Ashen One, zoom in, flip the card, compare both faces side by side, and reset the view.
+- Behind the Build explains the artwork layers, shader, integration choices, and links to the source for interview discussion.
+- Keyboard-accessible controls, visible focus, responsive layouts, reduced-motion support, and a static preview when WebGL is unavailable support different browsing needs. These provisions are not a substitute for a full accessibility audit.
+
+## How it is built
+
+- **React 19 + TypeScript + Vite** provide the responsive interface and build tooling.
+- **Three.js r180 and GLSL** render the custom layered hero. The original ThreeUI shrine is hosted in its own document, using the registered component and source files below.
+- The shrine is mounted on demand and unmounted when off-screen or when the page is hidden. The custom hero also pauses its render loop off-screen or in a hidden tab. Scene resources are released on cleanup.
+- Artwork for the shell is extracted from the registered source assets. The site is an unofficial fan-made showcase; Dark Souls and related artwork belong to their respective owners. ThreeUI supplies the original shrine component.
+
+### Design trade-offs
+
+The full shrine requires WebGL and an internet connection: its original HTML loads Three.js modules from a CDN, and Cindermane also loads its original assets from Supabase. A static preview and the workbench remain available if WebGL is unavailable. The comparison and hotspot views use layered 2D artwork rather than the shrine's 3D scene.
+
+### Interview walkthrough
+
+1. Show the collection and launch each variant; explain the original component and asset dependencies.
+2. Navigate the story and demonstrate the workbench's hotspots, zoom, flip, comparison, and reset.
+3. Open Behind the Build to discuss the shader and the decision to pause rendering outside the viewport.
+4. Run `npm run build` and inspect the source-integrity hashes below. The local source alias is intentional, as explained below.
 
 ## Source integrity
 
