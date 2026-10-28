@@ -377,6 +377,8 @@ export function Scene() {
     const y = (event.clientY - rect.top) / rect.height - 0.5;
     hero.style.setProperty("--parallax-x", `${(x * 20).toFixed(2)}px`);
     hero.style.setProperty("--parallax-y", `${(y * 14).toFixed(2)}px`);
+    hero.style.setProperty("--cursor-x", `${((x + 0.5) * 100).toFixed(1)}%`);
+    hero.style.setProperty("--cursor-y", `${((y + 0.5) * 100).toFixed(1)}%`);
   }, []);
 
   function enterExperience() {
@@ -600,7 +602,10 @@ export function Scene() {
                 <button type="button" onClick={flipHero} aria-pressed={heroFlipped}>
                   <span aria-hidden="true">⟲</span> {heroFlipped ? "Show front" : "Turn card"}
                 </button>
+                {heroFullscreen && <button type="button" onClick={toggleHeroFullscreen}>Exit full view</button>}
               </div>
+              <details className="relic-settings">
+                <summary><span><span aria-hidden="true">✧</span> Personalize your relic</span><span className="relic-settings__expand" aria-hidden="true">＋</span></summary>
               <div className="relic-lab" aria-label="Card effects">
                 <div className="relic-lab__lighting" role="group" aria-label="Choose lighting">
                   <span className="relic-lab__label">LIGHT</span>
@@ -620,10 +625,24 @@ export function Scene() {
                   <AmbientSound />
                 </div>
               </div>
+              </details>
             </div>
             <div className="hero-editorial__foot"><span>AN INTERACTIVE RELIC</span><span>EDITION 001 / 001</span></div>
           </div>
         </section>
+
+        <nav className="journey-strip" aria-label="Explore the archive">
+          <div className="journey-strip__intro"><span>THE ARCHIVE</span><strong>Choose your path<span aria-hidden="true"> ↘</span></strong></div>
+          <a href="#chronicle" className="journey-strip__item">
+            <span className="journey-strip__number">01</span><span><strong>The story</strong><small>A world of flame and ash</small></span><span className="journey-strip__arrow" aria-hidden="true">↗</span>
+          </a>
+          <button type="button" className="journey-strip__item" onClick={enterExperience}>
+            <span className="journey-strip__number">02</span><span><strong>The shrine</strong><small>Enter the interactive scene</small></span><span className="journey-strip__arrow" aria-hidden="true">↗</span>
+          </button>
+          <a href="#anatomy" className="journey-strip__item">
+            <span className="journey-strip__number">03</span><span><strong>The details</strong><small>Look closer at the relic</small></span><span className="journey-strip__arrow" aria-hidden="true">↗</span>
+          </a>
+        </nav>
 
         {/* ====================================================================
             3. SECTION 01 — THE ILLUMINATED ARCHAEOLOGICAL CODEX (CHRONICLE)

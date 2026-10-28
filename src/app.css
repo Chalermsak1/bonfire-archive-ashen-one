@@ -2595,3 +2595,69 @@ html { scroll-padding-top: 84px; }
 @media (min-width: 901px) and (max-height: 850px) {
   .hero-editorial .hero-relic-canvas-wrap { height: clamp(340px, 50vh, 425px); }
 }
+
+/* Cinematic opening and chapter navigation */
+.hero-monument { background: #090907; }
+.hero-monument__backdrop {
+  inset: -2%; opacity: 1;
+  background: linear-gradient(90deg, rgba(6,7,7,.95) 0%, rgba(6,7,7,.81) 31%, rgba(6,7,7,.48) 64%, rgba(6,7,7,.48) 100%), linear-gradient(0deg, #080908 0%, transparent 24%, rgba(7,8,7,.22) 100%), url('/archive/ashen-cathedral.jpg') center 55% / cover no-repeat;
+  transform: translate(calc(var(--parallax-x, 0px) * -.3), calc(var(--parallax-y, 0px) * -.3)) scale(1.025);
+  transition: transform .7s ease-out;
+}
+.hero-monument::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(ellipse 350px 260px at var(--cursor-x, 70%) var(--cursor-y, 45%), rgba(219,164,90,.085), transparent 75%); }
+.hero-editorial { gap: clamp(28px, 4vw, 70px); }
+.hero-editorial h1 { text-shadow: 0 9px 45px rgba(0,0,0,.5); }
+.hero-editorial__lead { text-shadow: 0 3px 18px #000; }
+.hero-editorial__art { isolation: isolate; }
+.hero-editorial__halo { border-color: rgba(222,185,123,.23); box-shadow: 0 0 80px rgba(178,113,46,.08), inset 0 0 80px rgba(178,113,46,.035); }
+.hero-editorial__halo::after { border-style: dashed; border-color: rgba(218,186,133,.18); animation: relic-ring 70s linear infinite; }
+@keyframes relic-ring { to { transform: rotate(360deg); } }
+.hero-editorial .hero-relic-canvas-wrap { height: clamp(470px, 65vh, 700px); }
+.relic-settings { position: relative; z-index: 3; width: min(100%, 420px); margin-top: 10px; }
+.relic-settings summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 0 14px; border: 1px solid rgba(213,181,123,.26); background: rgba(8,9,8,.76); color: #ddcbaa; cursor: pointer; list-style: none; font: 600 10px/1.3 var(--serif); letter-spacing: .13em; text-transform: uppercase; transition: border-color .2s, background .2s; }
+.relic-settings summary::-webkit-details-marker { display: none; }
+.relic-settings summary:hover, .relic-settings[open] summary { border-color: rgba(229,194,135,.62); background: rgba(25,23,18,.9); }
+.relic-settings summary span span { color: #e4b973; margin-right: 8px; font-size: 15px; }
+.relic-settings__expand { color: #e4b973; font: 20px/1 var(--reading); transition: transform .25s; }
+.relic-settings[open] .relic-settings__expand { transform: rotate(45deg); }
+.relic-settings .relic-lab { width: 100%; margin-top: 0; border-top: 0; }
+.hero-editorial__art:fullscreen .relic-settings { width: min(90vw, 520px); }
+.hero-editorial__art:fullscreen .relic-lab { width: 100%; }
+.journey-strip { display: grid; grid-template-columns: 1.05fr repeat(3, 1fr); gap: 0; padding: 0 clamp(28px, 6.5vw, 100px); background: #0c0e0c; border-block: 1px solid var(--line-gold); }
+.journey-strip__intro, .journey-strip__item { min-width: 0; min-height: 130px; display: flex; align-items: center; gap: 18px; padding: 25px clamp(16px, 2.2vw, 36px); border-right: 1px solid var(--line-hairline); }
+.journey-strip__intro { padding-left: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 6px; }
+.journey-strip__intro > span { color: var(--gold-base); font: 600 9px/1.4 var(--serif); letter-spacing: .2em; }
+.journey-strip__intro strong { color: var(--text-ivory); font: 400 25px/1.2 var(--reading); }
+.journey-strip__intro strong span { color: var(--gold-base); }
+.journey-strip__item { width: 100%; text-align: left; position: relative; transition: background .25s, transform .25s; }
+.journey-strip__item:last-child { border-right: 0; }
+.journey-strip__item:hover { background: linear-gradient(120deg, rgba(192,143,72,.12), transparent); }
+.journey-strip__number { color: #a88756; font: 600 10px/1 var(--serif); letter-spacing: .1em; }
+.journey-strip__item strong { display: block; color: #eee3d0; font: 500 20px/1.25 var(--reading); }
+.journey-strip__item small { display: block; margin-top: 4px; color: #aea391; font: 400 14px/1.3 var(--reading); }
+.journey-strip__arrow { margin-left: auto; color: #c9a46b; font-size: 18px; transition: transform .25s; }
+.journey-strip__item:hover .journey-strip__arrow { transform: translate(4px,-4px); }
+@media (min-width: 901px) and (max-height: 850px) {
+  .hero-editorial .hero-relic-canvas-wrap { height: clamp(420px, 60vh, 530px); }
+}
+@media (max-width: 900px) {
+  .hero-monument__backdrop { background-position: 58% center; }
+  .hero-editorial .hero-relic-canvas-wrap { height: clamp(360px, 72vw, 540px); }
+  .journey-strip { grid-template-columns: repeat(3, 1fr); padding: 16px 28px; }
+  .journey-strip__intro { grid-column: 1 / -1; min-height: 0; padding: 15px 0 20px; border: 0; }
+  .journey-strip__item { min-height: 100px; padding: 15px; border-top: 1px solid var(--line-hairline); }
+  .journey-strip__item:first-of-type { padding-left: 0; }
+}
+@media (max-width: 600px) {
+  .hero-monument__backdrop { background-position: 63% center; }
+  .hero-editorial .hero-relic-canvas-wrap { height: 385px; }
+  .journey-strip { grid-template-columns: 1fr; padding: 20px 22px; }
+  .journey-strip__intro { grid-column: auto; }
+  .journey-strip__item, .journey-strip__item:first-of-type { min-height: 76px; padding: 14px 0; border-right: 0; }
+  .journey-strip__item strong { font-size: 19px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-monument__backdrop, .relic-settings summary, .journey-strip__item, .journey-strip__arrow { transition: none; }
+  .hero-editorial__halo::after { animation: none; }
+}
+.hero-editorial__controls { flex-wrap: wrap; }
