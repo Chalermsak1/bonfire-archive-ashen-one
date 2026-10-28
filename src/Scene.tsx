@@ -506,6 +506,7 @@ export function Scene() {
     if (webglAvailable) setActive(true);
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     experienceRef.current?.scrollIntoView({ behavior: reducedMotion ? "instant" : "smooth", block: "start" });
+    experienceRef.current?.focus({ preventScroll: true });
   }
 
   function openRelic(variant: DarkSoulsHoloCardVariant) {
@@ -517,6 +518,7 @@ export function Scene() {
     transitionTimer.current = window.setTimeout(() => {
       if (webglAvailable) setActive(true);
       experienceRef.current?.scrollIntoView({ behavior: "instant", block: "start" });
+      experienceRef.current?.focus({ preventScroll: true });
     }, 350);
     transitionEndTimer.current = window.setTimeout(() => setEnteringRelic(null), 1050);
   }
@@ -735,7 +737,7 @@ export function Scene() {
                 <button className="button-luxury button-relic-gold" type="button" onClick={enterExperience}>
                   <span>Explore the shrine</span><Arrow />
                 </button>
-                <a className="hero-editorial__story" href="#chronicle">Discover the story <span aria-hidden="true">↓</span></a>
+                <a className="hero-editorial__story" href="#collection">Explore the collection <span aria-hidden="true">↓</span></a>
               </div>
               <p className="hero-editorial__note"><span aria-hidden="true">✦</span> Drag or tap the card to explore</p>
             </div>
@@ -800,11 +802,11 @@ export function Scene() {
             <p className="collection-mobile-hint">Swipe to explore the collection <span aria-hidden="true">→</span></p>
             <div className="collection-grid" role="group" aria-label="Relic collection, swipe or use the arrow keys to scroll" tabIndex={0}>
               <article className={`collection-relic${enteringRelic === "ashen-one" ? " is-entering" : ""}`} data-reveal data-ambient onPointerDown={moveCollectionLight} onPointerMove={moveCollectionLight} onPointerLeave={resetCollectionLight} onPointerCancel={resetCollectionLight}>
-                <div className="collection-relic__art collection-relic__art--ash" aria-hidden="true"><img className="collection-relic__scene" src="/archive/ruins.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/knight.webp" alt="" loading="lazy" decoding="async" /><span className="collection-relic__number">01 / ASH</span><div className="ambient-particles" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div><div className="collection-atmosphere" /><div className="collection-pedestal" /></div>
+                <div className="collection-relic__art collection-relic__art--ash"><img className="collection-relic__scene" src="/archive/ruins.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/knight.webp" alt="" loading="lazy" decoding="async" /><span className="collection-relic__number" aria-hidden="true">01 / ASH</span><div className="ambient-particles" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div><div className="collection-atmosphere" /><div className="collection-pedestal" /><button className="collection-art-action" type="button" onClick={() => openRelic("ashen-one")} aria-label="Explore The Ashen One shrine"><span aria-hidden="true">ENTER THE SHRINE ↗</span></button></div>
                 <div className="collection-relic__content"><p>THE UNKINDLED · NO. 001</p><h3>The Ashen One</h3><p>An ember endures among the ruins. Discover the champion and the gilded relic that holds their story.</p><button type="button" onClick={() => openRelic("ashen-one")}>Explore The Ashen One <Arrow diagonal /></button></div>
               </article>
               <article className={`collection-relic collection-relic--cinder${enteringRelic === "cindermane" ? " is-entering" : ""}`} data-reveal data-ambient onPointerDown={moveCollectionLight} onPointerMove={moveCollectionLight} onPointerLeave={resetCollectionLight} onPointerCancel={resetCollectionLight}>
-                <div className="collection-relic__art collection-relic__art--cinder" aria-hidden="true"><img className="collection-relic__scene" src="/archive/cindermane/background.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/cindermane/subject.webp" alt="" loading="lazy" decoding="async" /><span className="collection-relic__number">02 / CINDER</span><div className="ambient-particles" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div><div className="collection-atmosphere" /><div className="collection-pedestal" /></div>
+                <div className="collection-relic__art collection-relic__art--cinder"><img className="collection-relic__scene" src="/archive/cindermane/background.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/cindermane/subject.webp" alt="" loading="lazy" decoding="async" /><span className="collection-relic__number" aria-hidden="true">02 / CINDER</span><div className="ambient-particles" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div><div className="collection-atmosphere" /><div className="collection-pedestal" /><button className="collection-art-action" type="button" onClick={() => openRelic("cindermane")} aria-label="Explore Cindermane shrine"><span aria-hidden="true">ENTER THE SHRINE ↗</span></button></div>
                 <div className="collection-relic__content"><p>THE BLAZING RELIC · NO. 002</p><h3>Cindermane</h3><p>A different relic burns within the archive. Enter a second scene forged in flame and shadow.</p><button type="button" onClick={() => openRelic("cindermane")}>Explore Cindermane <Arrow diagonal /></button></div>
               </article>
             </div>
@@ -876,7 +878,7 @@ export function Scene() {
         {/* ====================================================================
             4. SECTION 02 — THE GRAND RELIQUARY SANCTUARY (THE RELIC)
             ==================================================================== */}
-        <section className="sanctuary-chamber" id="sanctuary" ref={experienceRef} aria-labelledby="sanctuary-title">
+        <section className="sanctuary-chamber" id="sanctuary" ref={experienceRef} tabIndex={-1} aria-labelledby="sanctuary-title">
           <div id="experience" className="scroll-anchor" />
           <div id="vault" className="scroll-anchor" />
           <div className="sanctuary-chamber__container">
@@ -1041,7 +1043,7 @@ export function Scene() {
                 The Conservator's <em>Workbench.</em>
               </h2>
               <p className="anatomy-studio__lead">
-                Select a detail to take a closer look at the border, the figure, and the light on the card.
+                Choose a point to inspect the border, figure, or light. Zoom in, compare both sides, and reset whenever you wish.
               </p>
             </div>
 
@@ -1049,7 +1051,7 @@ export function Scene() {
             <div className="workbench-grid">
               {/* Left Column: Curatorial Analysis Dossier */}
               <div className="workbench-dossier" data-reveal>
-                <div className="workbench-dossier__badge">CURATORIAL REPORT</div>
+                <div className="workbench-dossier__badge">CURATORIAL REPORT <span aria-hidden="true">✦</span></div>
                 <div className="workbench-dossier__card" aria-live="polite" aria-atomic="true">
                   {studyCompare ? (
                     <div className="dossier-entry" key="comparison"><div className="dossier-entry__header"><span className="dossier-entry__tag">SIDE BY SIDE</span><span className="dossier-entry__index">TWO FACES</span></div><h3 className="dossier-entry__title">A relic, both sides.</h3><p className="dossier-entry__desc">Compare the gilded portrait with the quiet sigil on its reverse. Select a detail to return to the close-up view.</p><div className="dossier-entry__meta"><span>LEFT: FRONT</span><span>RIGHT: REVERSE</span></div></div>

@@ -2983,3 +2983,59 @@ html { scroll-padding-top: 84px; }
 @media (max-width: 700px) { .shrine-discovery { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .collection-relic__art { min-height: 320px; } .collection-relic__content { min-height: 215px; padding: 6px 24px 28px; } .collection-relic__content h3 { font-size: 40px; } .collection-relic__content > p:not(:first-child) { font-size: 17px; } .shrine-discovery { padding: 25px 20px; } .shrine-symbols button { min-height: 90px; } .shrine-symbols small { font-size: 9px; } }
 @media (prefers-reduced-motion: reduce) { .relic-passage, .shrine-secret { animation: none; } .shrine-symbols button { transition: none; } }
+
+/* Art direction: one visual language from the opening relic to the final archive. */
+:root { --archive-cream: #f5ead8; --archive-muted: #d3c4ad; --archive-gold: #d9b982; }
+.hero-monument__backdrop { background: linear-gradient(90deg,rgba(5,7,6,.98) 0%,rgba(5,7,6,.86) 42%,rgba(5,7,6,.4) 100%), url('/archive/ashen-cathedral.jpg') center 48% / cover; opacity: .82; }
+.hero-monument__godray { opacity: .75; }
+.hero-editorial h1 { text-wrap: balance; }
+.hero-editorial__lead { max-width: 440px; color: #e8ddcd; }
+.hero-editorial__actions { gap: 24px; }
+.hero-editorial__note, .hero-editorial__controls > span { color: #d1c3ae; }
+.hero-editorial__foot { color: #c0b29a; }
+.button-relic-gold { background: #dfc18e; border-color: #dfc18e; }
+.button-relic-gold:hover { background: #f1d9ac; border-color: #f1d9ac; }
+.collection-heading h2, .chapter-crest__title, .sanctuary-chamber__title, .anatomy-studio__title, .foundry-header__title, .crypt-conclusion__title { text-wrap: balance; }
+.collection-heading > p, .sanctuary-chamber__lead, .anatomy-studio__lead, .foundry-header__desc { color: #ddd0bc; }
+.relic-collection { background: radial-gradient(ellipse at 20% 4%,rgba(148,95,49,.13),transparent 45%), #0a0c0a; }
+.collection-relic { border-color: rgba(219,185,130,.32); box-shadow: 0 20px 65px rgba(0,0,0,.2); }
+.collection-relic__art .collection-art-action { position: absolute; z-index: 5; inset: 0; width: 100%; height: 100%; border: 0; cursor: pointer; background: transparent; }
+.collection-relic__art .collection-art-action > span { position: absolute; top: auto; left: auto; right: 20px; bottom: 22px; padding: 12px 14px; border: 1px solid rgba(237,208,157,.6); background: rgba(7,8,6,.8); color: #f6e4c6; font: 600 10px/1.2 var(--serif); letter-spacing: .1em; transition: background .25s, border-color .25s; }
+.collection-art-action:hover > span, .collection-art-action:focus-visible > span { background: #e0bd83; color: #15120c; border-color: #e0bd83; }
+.collection-art-action:focus-visible { outline: 3px solid #f2d5a2; outline-offset: -5px; }
+.collection-relic__content { border-top: 1px solid rgba(212,184,131,.13); }
+.collection-relic__content > p:not(:first-child) { color: #dfd3c0; }
+.collection-relic__content button { min-height: 48px; }
+.chronicle-codex { background: radial-gradient(ellipse at 50% 0%, rgba(166,105,47,.12),transparent 35%),#0b0d0b; }
+.echo-exhibit { border-color: rgba(222,190,141,.34); }
+.echo-exhibit__story > p:last-child, .chronicle-scene__copy p { color: #e0d5c4; }
+.echo-moments__item { min-height: 62px; }
+.chronicle-scene { border-color: rgba(222,190,141,.25); }
+.sanctuary-chamber { background: radial-gradient(ellipse at 50% 30%,rgba(132,83,42,.11),transparent 45%),#090b09; }
+.sanctuary-chamber:focus { outline: none; }
+.vault-toolbar { background: #11130f; }
+.vault-hud__info span, .vault-hud__info strong { color: #e0d4c2; }
+.vault-token-btn, .vault-action-btn { font-size: 11px; }
+.anatomy-studio { background: radial-gradient(ellipse at 50% 50%,rgba(129,85,46,.09),transparent 55%),#0a0c0b; }
+.workbench-dossier__card, .workbench-plinth, .focal-item { border-color: rgba(215,184,135,.25); }
+.workbench-dossier__badge, .workbench-focals__title { color: #dbb981; font-size: 11px; }
+.workbench-dossier__badge span { float: right; color: #bb925d; }
+.dossier-entry__desc, .pipeline-step__content p { color: #ded1bf; }
+.focal-item { min-height: 74px; }
+.focal-item__title { color: #f2e8d8; }
+.workbench-tool { font-size: 10px; }
+.foundry-blueprint { background: radial-gradient(ellipse at 85% 10%,rgba(129,83,44,.12),transparent 45%), #0b0d0b; }
+.blueprint-panel { border-color: rgba(215,184,135,.24); }
+.build-case__grid article p { color: #ded1bf; }
+.crypt-conclusion { background-color: #080907; }
+.crypt-footer { border-top: 1px solid rgba(215,184,135,.25); }
+@media (max-width: 600px) {
+  .hero-editorial__note, .hero-editorial__controls > span { font-size: 10px; }
+  .collection-relic__art .collection-art-action > span { right: 12px; bottom: 14px; padding: 10px 12px; font-size: 9px; }
+  .collection-relic__content button, .workbench-tool, .vault-token-btn { font-size: 10px; }
+  .workbench-reading span, .workbench-reading small { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .collection-relic__art .collection-art-action > span { transition: none; } }
+.verified-repo-block__info { min-width: 0; }
+.verified-repo-block__cmd { overflow-wrap: anywhere; white-space: normal; color: #cfb181; }
+@media (max-width: 480px) { .verified-repo-block { padding: 22px 18px; gap: 12px; } .verified-repo-block__title { font-size: 18px; } .verified-repo-block__cmd { font-size: 11px; } }
