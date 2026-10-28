@@ -223,6 +223,7 @@ export function Scene() {
   const [heroFullscreen, setHeroFullscreen] = useState(false);
   const [studyFlipped, setStudyFlipped] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState(0);
+  const [studyZoomed, setStudyZoomed] = useState(false);
   const [hearthKindled, setHearthKindled] = useState(true);
   const [kindlePulse, setKindlePulse] = useState(false);
 
@@ -232,6 +233,21 @@ export function Scene() {
   const heroArtRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLElement>(null);
   const menuToggleRef = useRef<HTMLButtonElement>(null);
+
+  // Fragment targets are rendered by React, after the browser's initial anchor lookup.
+  useEffect(() => {
+    if (!window.location.hash) return;
+    let id: string;
+    try {
+      id = decodeURIComponent(window.location.hash.slice(1));
+    } catch {
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "instant", block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   // Check WebGL availability
   useEffect(() => {
@@ -407,6 +423,15 @@ export function Scene() {
   function flipHero() {
     setAutoSpin(false);
     setHeroFlipped((flipped) => !flipped);
+  }
+
+  function moveWorkbenchLight(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "touch" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, (event.clientX - rect.left) / rect.width * 100));
+    const y = Math.max(0, Math.min(100, (event.clientY - rect.top) / rect.height * 100));
+    event.currentTarget.style.setProperty("--inspect-x", `${x.toFixed(1)}%`);
+    event.currentTarget.style.setProperty("--inspect-y", `${y.toFixed(1)}%`);
   }
 
   function toggleHeroFullscreen() {
@@ -905,9 +930,9 @@ export function Scene() {
               {/* Left Column: Curatorial Analysis Dossier */}
               <div className="workbench-dossier" data-reveal>
                 <div className="workbench-dossier__badge">CURATORIAL REPORT</div>
-                <div className="workbench-dossier__card">
+                <div className="workbench-dossier__card" aria-live="polite" aria-atomic="true">
                   {studyFlipped ? (
-                    <div className="dossier-entry dossier-entry--sigil">
+                    <div className="dossier-entry dossier-entry--sigil" key="reverse">
                       <div className="dossier-entry__header">
                         <span className="dossier-entry__tag">REVERSE ARTIFACT SEAL</span>
                         <span className="dossier-entry__index">SEAL 01</span>
@@ -922,7 +947,7 @@ export function Scene() {
                       </div>
                     </div>
                   ) : (
-                    <div className="dossier-entry">
+                    <div className="dossier-entry" key={selectedDetail}>
                       <div className="dossier-entry__header">
                         <span className="dossier-entry__tag">{cardDetails[selectedDetail].tag}</span>
                         <span className="dossier-entry__index">DETAIL {cardDetails[selectedDetail].number}</span>
@@ -951,16 +976,28 @@ export function Scene() {
 
               {/* Center Column: The Mounted Artifact Plinth */}
               <div className="workbench-plinth-wrap" data-reveal>
-                <div className="workbench-plinth">
+                <div
+                  className="workbench-plinth"
+                  data-detail={studyFlipped ? "reverse" : selectedDetail}
+                  data-zoomed={studyZoomed}
+                  onPointerMove={moveWorkbenchLight}
+                  onPointerLeave={(event) => {
+                    event.currentTarget.style.removeProperty("--inspect-x");
+                    event.currentTarget.style.removeProperty("--inspect-y");
+                  }}
+                >
+                  <div className="workbench-light" aria-hidden="true" />
+                  <div className="workbench-scan" key={studyFlipped ? "reverse" : selectedDetail} aria-hidden="true" />
                   <div className="workbench-plinth__grid" aria-hidden="true">
                     <span className="workbench-coord workbench-coord--tl">X: 001.4</span>
                     <span className="workbench-coord workbench-coord--tr">Y: 002.8</span>
                     <span className="workbench-coord workbench-coord--bl">Z: +0.08</span>
-                    <span className="workbench-coord workbench-coord--br">SCALE: 1:1</span>
+                    <span className="workbench-coord workbench-coord--br">VIEW: {studyZoomed ? "1.45×" : "1×"}</span>
                   </div>
 
                   <div className="workbench-card-housing">
                     <ArchiveCard compact flipped={studyFlipped} highlightIndex={studyFlipped ? undefined : selectedDetail} />
+                    {!studyFlipped && <span className="workbench-focus-halo" key={selectedDetail} aria-hidden="true" />}
 
                     {/* Interactive Hotspot Reticles */}
                     {!studyFlipped &&
@@ -980,6 +1017,15 @@ export function Scene() {
                       ))}
                   </div>
                 </div>
+                <div className="workbench-tools" role="group" aria-label="Card view controls">
+                  <button type="button" className="workbench-tool" aria-pressed={studyZoomed} onClick={() => setStudyZoomed((zoomed) => !zoomed)}>
+                    <span aria-hidden="true">{studyZoomed ? "−" : "+"}</span> {studyZoomed ? "Show full card" : "Zoom selected detail"}
+                  </button>
+                  <button type="button" className="workbench-tool workbench-tool--reset" onClick={() => { setStudyZoomed(false); setStudyFlipped(false); setSelectedDetail(0); }}>
+                    <span aria-hidden="true">↺</span> Reset view
+                  </button>
+                </div>
+                <p className="workbench-tip">SELECT A POINT · ZOOM FOR A CLOSER LOOK</p>
               </div>
 
               {/* Right Column: Focal Detail Selectors */}
