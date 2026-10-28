@@ -95,8 +95,13 @@ export function HeroRelic3D({ flipped, onFlip, lightMode, autoSpin, onReady, cla
     camera.position.set(0, 0, 9.5);
 
     // 3. Texture Loading Manager for guaranteed seamless appearance
+    let introStarted = 0;
+    let textureFailed = false;
     const manager = new THREE.LoadingManager();
+    manager.onError = () => { textureFailed = true; };
     manager.onLoad = () => {
+      if (textureFailed) { setWebglSupported(false); onReadyRef.current?.(); return; }
+      introStarted = performance.now();
       setIsLoaded(true);
       onReadyRef.current?.();
     };
@@ -481,6 +486,9 @@ export function HeroRelic3D({ flipped, onFlip, lightMode, autoSpin, onReady, cla
       const elapsedTime = clock.getElapsedTime();
       const p = physicsRef.current;
       const prefersReducedMotion = motionPreference.matches;
+      // A brief opening push-in never blocks interaction or reduced-motion users.
+      const intro = introStarted ? Math.min(1, (now - introStarted) / 1900) : 0;
+      camera.position.z = prefersReducedMotion || dragRef.current.isDragging ? 9.5 : 9.5 + 1.0 * Math.pow(1 - intro, 3);
       if (currentLight !== lightModeRef.current) {
         currentLight = lightModeRef.current;
         const preset = lightPresets[lightModeRef.current];
@@ -574,6 +582,8 @@ export function HeroRelic3D({ flipped, onFlip, lightMode, autoSpin, onReady, cla
     // Cleanup on unmount
     return () => {
       disposed = true;
+      manager.onLoad = () => {};
+      manager.onError = () => {};
       cancelAnimationFrame(animId);
       document.removeEventListener("visibilitychange", syncRendering);
       window.removeEventListener("resize", updateSize);
@@ -602,7 +612,7 @@ export function HeroRelic3D({ flipped, onFlip, lightMode, autoSpin, onReady, cla
       materials.forEach((material) => material.dispose());
       scene.clear();
     };
-  }, []);
+  }, [webglSupported]);
 
   // Pointer Interaction Handlers
   const handlePointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {

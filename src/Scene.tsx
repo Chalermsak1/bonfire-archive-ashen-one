@@ -68,8 +68,8 @@ function ArchiveCard({
         {/* Front Face */}
         <div className="archive-card__face archive-card__front">
           <div className="archive-card__world" />
-          <img className="archive-card__knight" src="/archive/knight.webp" alt="" decoding="async" />
-          <img className="archive-card__frame" src="/archive/frame.webp" alt="" decoding="async" />
+          <img className="archive-card__knight" src="/archive/knight.webp" alt="" loading="lazy" decoding="async" />
+          <img className="archive-card__frame" src="/archive/frame.webp" alt="" loading="lazy" decoding="async" />
           <div className="archive-card__shine" />
           <div className="archive-card__highlight-ring" />
           <div className="archive-card__name">THE ASHEN ONE</div>
@@ -78,7 +78,7 @@ function ArchiveCard({
 
         {/* Back Face */}
         <div className="archive-card__face archive-card__back">
-          <img src="/archive/sigil.webp" alt="" decoding="async" />
+          <img src="/archive/sigil.webp" alt="" loading="lazy" decoding="async" />
           <div className="archive-card__back-flame" />
           <span>THE EMBER REMAINS</span>
         </div>
@@ -147,6 +147,29 @@ function AmbientSound() {
   const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
+    if (!playing) return;
+    const playAccent = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target.closest("button, a") : null;
+      const context = contextRef.current;
+      if (!target || target.closest("[data-sound-toggle]") || !context || context.state !== "running") return;
+      const tone = context.createOscillator();
+      const gain = context.createGain();
+      const now = context.currentTime;
+      tone.type = "sine";
+      tone.frequency.setValueAtTime(target.closest(".workbench-plinth-wrap, .workbench-focals") ? 570 : 410, now);
+      tone.frequency.exponentialRampToValueAtTime(220, now + .16);
+      gain.gain.setValueAtTime(.0001, now);
+      gain.gain.exponentialRampToValueAtTime(.025, now + .015);
+      gain.gain.exponentialRampToValueAtTime(.0001, now + .2);
+      tone.connect(gain).connect(context.destination);
+      tone.start(now); tone.stop(now + .21);
+      tone.onended = () => { tone.disconnect(); gain.disconnect(); };
+    };
+    document.addEventListener("click", playAccent);
+    return () => document.removeEventListener("click", playAccent);
+  }, [playing]);
+
+  useEffect(() => {
     const pauseWhenHidden = () => {
       if (document.hidden && contextRef.current?.state === "running") {
         void contextRef.current.suspend();
@@ -208,7 +231,7 @@ function AmbientSound() {
   }
 
   return (
-    <button type="button" aria-pressed={playing} disabled={unavailable} onClick={() => void toggleSound()} title={unavailable ? "Sound is unavailable in this browser" : "Toggle ambient sound"}>
+    <button data-sound-toggle type="button" aria-pressed={playing} disabled={unavailable} onClick={() => void toggleSound()} title={unavailable ? "Sound is unavailable in this browser" : "Toggle ambient sound"}>
       <span aria-hidden="true">♫</span> {unavailable ? "Sound unavailable" : playing ? "Sound on" : "Sound off"}
     </button>
   );
@@ -234,6 +257,9 @@ export function Scene() {
   const [studyCompare, setStudyCompare] = useState(false);
   const [hearthKindled, setHearthKindled] = useState(true);
   const [kindlePulse, setKindlePulse] = useState(false);
+  const [enteringRelic, setEnteringRelic] = useState<DarkSoulsHoloCardVariant | null>(null);
+  const transitionTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(transitionTimer.current), []);
 
   const experienceRef = useRef<HTMLElement>(null);
   const stageWrapRef = useRef<HTMLDivElement>(null);
@@ -405,6 +431,17 @@ export function Scene() {
     hero.style.setProperty("--cursor-y", `${((y + 0.5) * 100).toFixed(1)}%`);
   }, []);
 
+  function moveCollectionLight(event: ReactPointerEvent<HTMLElement>) {
+    if (event.pointerType !== "mouse" || reducedMotion) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty("--gallery-x", `${((event.clientX - rect.left) / rect.width * 100).toFixed(1)}%`);
+    event.currentTarget.style.setProperty("--gallery-y", `${((event.clientY - rect.top) / rect.height * 100).toFixed(1)}%`);
+  }
+  function resetCollectionLight(event: ReactPointerEvent<HTMLElement>) {
+    event.currentTarget.style.removeProperty("--gallery-x");
+    event.currentTarget.style.removeProperty("--gallery-y");
+  }
+
   function enterExperience() {
     setMenuOpen(false);
     if (webglAvailable) setActive(true);
@@ -413,8 +450,11 @@ export function Scene() {
   }
 
   function openRelic(variant: DarkSoulsHoloCardVariant) {
+    if (enteringRelic) return;
     setStageVariant(variant);
-    enterExperience();
+    setEnteringRelic(variant);
+    const delay = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 380;
+    transitionTimer.current = window.setTimeout(() => { setEnteringRelic(null); enterExperience(); }, delay);
   }
 
   function openFullscreen() {
@@ -642,6 +682,7 @@ export function Scene() {
                 <button type="button" onClick={flipHero} aria-pressed={heroFlipped}>
                   <span aria-hidden="true">⟲</span> {heroFlipped ? "Show front" : "Turn card"}
                 </button>
+                <AmbientSound />
                 {heroFullscreen && <button type="button" onClick={toggleHeroFullscreen}>Exit full view</button>}
               </div>
               <details className="relic-settings">
@@ -662,7 +703,6 @@ export function Scene() {
                   {fullscreenAvailable && (
                     <button type="button" onClick={toggleHeroFullscreen}><ExpandIcon /> {heroFullscreen ? "Exit view" : "Full view"}</button>
                   )}
-                  <AmbientSound />
                 </div>
               </div>
               </details>
@@ -690,12 +730,13 @@ export function Scene() {
               <div><p className="collection-eyebrow">✦ &nbsp; THE ARCHIVE / 002 RELICS</p><h2 id="collection-title">Two tales. <em>One flame.</em></h2></div>
               <p>Choose a relic and step into its world. Each opens an interactive ThreeUI shrine for you to explore.</p>
             </div>
-            <div className="collection-grid">
-              <article className="collection-relic" data-reveal>
+            <p className="collection-mobile-hint">Swipe to explore the collection <span aria-hidden="true">→</span></p>
+            <div className="collection-grid" role="group" aria-label="Relic collection, swipe or use the arrow keys to scroll" tabIndex={0}>
+              <article className={`collection-relic${enteringRelic === "ashen-one" ? " is-entering" : ""}`} data-reveal onPointerMove={moveCollectionLight} onPointerLeave={resetCollectionLight}>
                 <div className="collection-relic__art collection-relic__art--ash" aria-hidden="true"><img className="collection-relic__scene" src="/archive/ruins.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/knight.webp" alt="" loading="lazy" decoding="async" /><span>01 / ASH</span></div>
                 <div className="collection-relic__content"><p>THE UNKINDLED · NO. 001</p><h3>The Ashen One</h3><p>An ember endures among the ruins. Discover the champion and the gilded relic that holds their story.</p><button type="button" onClick={() => openRelic("ashen-one")}>Explore The Ashen One <Arrow diagonal /></button></div>
               </article>
-              <article className="collection-relic collection-relic--cinder" data-reveal>
+              <article className={`collection-relic collection-relic--cinder${enteringRelic === "cindermane" ? " is-entering" : ""}`} data-reveal onPointerMove={moveCollectionLight} onPointerLeave={resetCollectionLight}>
                 <div className="collection-relic__art collection-relic__art--cinder" aria-hidden="true"><img className="collection-relic__scene" src="/archive/cindermane/background.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/cindermane/subject.webp" alt="" loading="lazy" decoding="async" /><span>02 / CINDER</span></div>
                 <div className="collection-relic__content"><p>THE BLAZING RELIC · NO. 002</p><h3>Cindermane</h3><p>A different relic burns within the archive. Enter a second scene forged in flame and shadow.</p><button type="button" onClick={() => openRelic("cindermane")}>Explore Cindermane <Arrow diagonal /></button></div>
               </article>
@@ -749,6 +790,16 @@ export function Scene() {
                 <button key={moment.number} type="button" className="echo-moments__item" aria-pressed={storyMoment === index} onClick={() => setStoryMoment(index)}>
                   <span>{moment.number}</span><strong>{moment.label}</strong><span aria-hidden="true">↗</span>
                 </button>
+              ))}
+            </div>
+            <button className="story-next" type="button" onClick={enterExperience}>Skip to the shrine <Arrow diagonal /></button>
+            <div className="chronicle-sequence" aria-label="The journey through ash and flame">
+              <p className="chronicle-sequence__intro">THE JOURNEY CONTINUES <span aria-hidden="true">↓</span></p>
+              {storyMoments.map((moment, index) => (
+                <article className={`chronicle-scene chronicle-scene--${index + 1}`} key={moment.number}>
+                  <div className="chronicle-scene__image" aria-hidden="true"><img src={moment.image} alt="" loading="lazy" decoding="async" />{index === 1 && <img className="chronicle-scene__figure" src="/archive/knight.webp" alt="" loading="lazy" decoding="async" />}</div>
+                  <div className="chronicle-scene__copy"><span>CHAPTER {moment.number} / 03</span><h3>{moment.title}</h3><p>{moment.text}</p><button type="button" onClick={() => { setStoryMoment(index); document.querySelector(".echo-exhibit")?.scrollIntoView({ behavior: reducedMotion ? "instant" : "smooth", block: "center" }); }}>Revisit this chapter <Arrow diagonal /></button></div>
+                </article>
               ))}
             </div>
             <button className="story-next" type="button" onClick={enterExperience}>Continue to the shrine <Arrow diagonal /></button>
@@ -984,7 +1035,7 @@ export function Scene() {
                   }}
                 >
                   <div className="workbench-light" aria-hidden="true" />
-                  <div className="workbench-scan" key={studyFlipped ? "reverse" : selectedDetail} aria-hidden="true" />
+                  <div className="workbench-scan" key={`${studyCompare}-${studyFlipped ? "reverse" : selectedDetail}`} aria-hidden="true" />
                   <div className="workbench-plinth__grid" aria-hidden="true">
                     <span className="workbench-coord workbench-coord--tl">X: 001.4</span>
                     <span className="workbench-coord workbench-coord--tr">Y: 002.8</span>
@@ -1023,7 +1074,7 @@ export function Scene() {
                     <span aria-hidden="true">↺</span> Reset view
                   </button>
                 </div>
-                <p className="workbench-tip">SELECT A POINT · ZOOM FOR A CLOSER LOOK</p>
+                <div className="workbench-reading" aria-live="polite"><span>INSPECTION / {studyCompare ? "COMPARING FACES" : studyFlipped ? "REVERSE" : `DETAIL ${cardDetails[selectedDetail].number}`}</span><strong>{studyCompare ? "Front and reverse" : studyFlipped ? "The reverse seal" : cardDetails[selectedDetail].title}</strong><small>{studyZoomed ? "Magnified view" : "Select a detail or zoom for a closer look"}</small></div>
               </div>
 
               {/* Right Column: Focal Detail Selectors */}
