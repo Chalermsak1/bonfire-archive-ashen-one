@@ -87,6 +87,12 @@ function ArchiveCard({
   );
 }
 
+const storyMoments = [
+  { number: "01", label: "The fading world", title: "A world in twilight.", text: "The old world stands in the shadow of a fading flame. Among its ruins, a single ember still holds the promise of what comes next.", image: "/archive/ashen-cathedral.jpg" },
+  { number: "02", label: "The Ashen One", title: "The one who rises.", text: "From the ashes comes an Unkindled champion. This relic captures that journey in layers of worn gold, shadow, and light.", image: "/archive/ruins.webp" },
+  { number: "03", label: "The last ember", title: "The fire awaits.", text: "A coiled sword and the glow of a bonfire mark a place to pause. Step closer, turn the card, and discover the story in its details.", image: "/archive/ashen-cathedral.jpg" },
+];
+
 const cardDetails = [
   {
     number: "01",
@@ -221,6 +227,7 @@ export function Scene() {
   const [autoSpin, setAutoSpin] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [heroFullscreen, setHeroFullscreen] = useState(false);
+  const [storyMoment, setStoryMoment] = useState(0);
   const [studyFlipped, setStudyFlipped] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState(0);
   const [studyZoomed, setStudyZoomed] = useState(false);
@@ -685,77 +692,36 @@ export function Scene() {
               <h2 id="chronicle-title" className="chapter-crest__title">
                 The Ember That Would Not Die
               </h2>
-              <span className="chapter-crest__sub">HISTORICAL RECORD OF THE KILN ARTIFACT</span>
+              <span className="chapter-crest__sub">AN INTERACTIVE CHRONICLE</span>
             </div>
 
-            {/* Monumental Italic Pull-Quote */}
-            <blockquote className="chronicle-quote" data-reveal>
-              <p>
-                "When the fire fades, the lords go without thrones. In the twilight of Lothric, an Unkindled champion arose—bound not by destiny, but by the relentless hunger of ash."
-              </p>
-            </blockquote>
-
-            {/* Staggered Archaeological Narrative Fragments */}
-            <div className="codex-fragments">
-              {/* Fragment 01 */}
-              <article className="codex-fragment codex-fragment--left" data-reveal>
-                <div className="codex-fragment__seal">
-                  <span className="codex-fragment__latin">CINIS AD CINEREM</span>
-                  <span className="codex-fragment__num">§ 01</span>
+            <div className="echo-exhibit" data-moment={storyMoment} data-reveal>
+              <div className="echo-exhibit__visual" aria-hidden="true">
+                <img key={storyMoment} className="echo-exhibit__landscape" src={storyMoments[storyMoment].image} alt="" />
+                {storyMoment === 1 && <img className="echo-exhibit__figure" src="/archive/knight.webp" alt="" />}
+                <span className="echo-exhibit__visual-index">THE ASHEN COLLECTION <span> / </span> {storyMoments[storyMoment].number}</span>
+                <span className="echo-exhibit__visual-mark">✦</span>
+              </div>
+              <div className="echo-exhibit__content">
+                <div className="echo-exhibit__top"><span>A WORLD BETWEEN FLAME &amp; ASH</span><span>{storyMoments[storyMoment].number} / 03</span></div>
+                <div className="echo-exhibit__story" key={storyMoment} aria-live="polite" aria-atomic="true">
+                  <p className="echo-exhibit__label">{storyMoments[storyMoment].label}</p>
+                  <h3>{storyMoments[storyMoment].title}</h3>
+                  <p>{storyMoments[storyMoment].text}</p>
                 </div>
-                <h3 className="codex-fragment__heading">The Forging at the Kiln</h3>
-                <p className="codex-fragment__text">
-                  <span className="drop-cap">W</span>hen the flame begins to fade, the Ashen One rises from the ashes. This digital relic captures that journey in a frame of worn gold, shadow, and light.
-                </p>
-                <div className="codex-fragment__rule" />
-              </article>
-
-              {/* Fragment 02 */}
-              <article className="codex-fragment codex-fragment--right" data-reveal>
-                <div className="codex-fragment__seal">
-                  <span className="codex-fragment__latin">IGNIS REVERBERAT</span>
-                  <span className="codex-fragment__num">§ 02</span>
+                <div className="echo-exhibit__controls">
+                  <button type="button" aria-label="Previous chapter" onClick={() => setStoryMoment((moment) => (moment + storyMoments.length - 1) % storyMoments.length)}>←</button>
+                  <span>EXPLORE THE CHRONICLE</span>
+                  <button type="button" aria-label="Next chapter" onClick={() => setStoryMoment((moment) => (moment + 1) % storyMoments.length)}>→</button>
                 </div>
-                <h3 className="codex-fragment__heading">The Coiled Sword Sanctuary</h3>
-                <p className="codex-fragment__text">
-                  A coiled sword and candlelight give the card a place in the world. Turn the relic to watch the light move across its surface and discover the mark on its reverse.
-                </p>
-                <div className="codex-fragment__rule" />
-              </article>
+              </div>
             </div>
-
-            {/* Full-width Curatorial Dimension Ledger */}
-            <div className="reliquary-ledger" data-reveal>
-              <div className="reliquary-ledger__header">
-                <span className="reliquary-ledger__badge">CURATORIAL SPECIFICATION MATRIX</span>
-                <span className="reliquary-ledger__code">ARCHIVE REGISTRY // LOTHRIC-001</span>
-              </div>
-              <div className="reliquary-ledger__grid">
-                <div className="reliquary-ledger__cell">
-                  <span className="reliquary-ledger__num">I</span>
-                  <span className="reliquary-ledger__label">FORMAT</span>
-                  <strong className="reliquary-ledger__val">DIGITAL COLLECTIBLE</strong>
-                  <span className="reliquary-ledger__sub">AN INTERACTIVE EXPERIENCE</span>
-                </div>
-                <div className="reliquary-ledger__cell">
-                  <span className="reliquary-ledger__num">II</span>
-                  <span className="reliquary-ledger__label">ARTWORK</span>
-                  <strong className="reliquary-ledger__val">GOLD-TONED FRAME</strong>
-                  <span className="reliquary-ledger__sub">ORNATE DIGITAL ARTWORK</span>
-                </div>
-                <div className="reliquary-ledger__cell">
-                  <span className="reliquary-ledger__num">III</span>
-                  <span className="reliquary-ledger__label">OPTICAL CORE</span>
-                  <strong className="reliquary-ledger__val">4-DEPTH SPATIAL PARALLAX</strong>
-                  <span className="reliquary-ledger__sub">GLSL DIFFRACTION SHADER</span>
-                </div>
-                <div className="reliquary-ledger__cell">
-                  <span className="reliquary-ledger__num">IV</span>
-                  <span className="reliquary-ledger__label">SACRIFICIAL SEAL</span>
-                  <strong className="reliquary-ledger__val">GOLDEN REVERSE SIGIL</strong>
-                  <span className="reliquary-ledger__sub">"THE EMBER REMAINS"</span>
-                </div>
-              </div>
+            <div className="echo-moments" role="group" aria-label="Choose a story chapter">
+              {storyMoments.map((moment, index) => (
+                <button key={moment.number} type="button" className="echo-moments__item" aria-pressed={storyMoment === index} onClick={() => setStoryMoment(index)}>
+                  <span>{moment.number}</span><strong>{moment.label}</strong><span aria-hidden="true">↗</span>
+                </button>
+              ))}
             </div>
           </div>
         </section>
@@ -1140,6 +1106,14 @@ export function Scene() {
                   <span className="blueprint-panel__tag">02 // GLSL FRAGMENT SHADER</span>
                   <span className="blueprint-panel__grid-coord">SRC: HeroRelic3D.tsx</span>
                 </div>
+                <div className="blueprint-stack" aria-hidden="true">
+                  <span className="blueprint-stack__plane blueprint-stack__plane--back" />
+                  <span className="blueprint-stack__plane blueprint-stack__plane--figure" />
+                  <span className="blueprint-stack__plane blueprint-stack__plane--frame" />
+                  <span className="blueprint-stack__caption">ARTWORK · DEPTH · LIGHT</span>
+                </div>
+                <details className="shader-disclosure">
+                  <summary>Explore the shader <span aria-hidden="true">＋</span></summary>
                 <div className="shader-code-box">
                   <pre className="shader-code">
                     <code>
@@ -1181,6 +1155,7 @@ void main() {
                     </code>
                   </pre>
                 </div>
+                </details>
               </div>
             </div>
 

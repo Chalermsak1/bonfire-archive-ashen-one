@@ -2705,3 +2705,79 @@ html { scroll-padding-top: 84px; }
   .workbench-scan::before, .workbench-focus-halo, .dossier-entry { animation: none; }
   .workbench-focus-halo { opacity: .6; }
 }
+
+/* A more visual, interactive path through the story. */
+.chronicle-codex { background: radial-gradient(ellipse 65% 35% at 50% 0%, rgba(182,122,58,.12), transparent 75%), #0b0d0b; }
+.chapter-crest { margin-bottom: clamp(35px, 4vw, 60px); }
+.chapter-crest__sub { color: #bba47b; letter-spacing: .18em; }
+.echo-exhibit { display: grid; grid-template-columns: minmax(0,1.12fr) minmax(0,.88fr); min-height: 510px; border: 1px solid rgba(213,185,137,.25); background: #11130f; box-shadow: 0 30px 75px rgba(0,0,0,.3); overflow: hidden; }
+.echo-exhibit__visual { position: relative; min-height: 510px; overflow: hidden; isolation: isolate; background: #13130f; }
+.echo-exhibit__visual::after { content: ''; position: absolute; inset: 0; z-index: 2; background: linear-gradient(0deg, rgba(5,7,6,.8), transparent 43%), linear-gradient(90deg, transparent 60%, rgba(8,9,8,.38)); pointer-events: none; }
+.echo-exhibit__landscape { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 65% center; filter: brightness(.72) saturate(.82); animation: echo-image 1s ease both; }
+.echo-exhibit[data-moment="1"] .echo-exhibit__landscape { filter: brightness(.43) saturate(.65); object-position: center 46%; }
+.echo-exhibit[data-moment="2"] .echo-exhibit__landscape { object-position: 90% center; filter: brightness(.65) saturate(.9); }
+.echo-exhibit__figure { position: absolute; z-index: 1; height: 98%; width: 85%; object-fit: contain; object-position: center bottom; bottom: -4%; left: 8%; filter: drop-shadow(0 12px 20px rgba(0,0,0,.7)); animation: echo-figure .8s ease both; }
+.echo-exhibit__visual-index { position: absolute; z-index: 3; left: 28px; bottom: 27px; color: #e1cba5; font: 600 9px/1.4 var(--serif); letter-spacing: .18em; }
+.echo-exhibit__visual-index span { color: #b98f51; margin: 0 8px; }
+.echo-exhibit__visual-mark { position: absolute; z-index: 3; top: 26px; left: 28px; color: #f0c981; font-size: 20px; text-shadow: 0 0 20px rgba(231,147,61,.7); }
+.echo-exhibit__content { display: flex; flex-direction: column; justify-content: space-between; gap: 36px; padding: clamp(30px,4vw,62px); background: radial-gradient(ellipse at 100% 0%, rgba(165,111,48,.1), transparent 50%), #12140f; }
+.echo-exhibit__top { display: flex; justify-content: space-between; gap: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line-gold); color: #bc9e6a; font: 600 9px/1.4 var(--serif); letter-spacing: .16em; }
+.echo-exhibit__story { animation: echo-copy .5s ease both; }
+.echo-exhibit__label { margin: 0 0 17px; color: #d1ad70; font: 600 10px/1.4 var(--serif); letter-spacing: .19em; text-transform: uppercase; }
+.echo-exhibit__story h3 { margin: 0; color: #f3e9d8; font: 400 clamp(44px,4.5vw,72px)/1 var(--reading); letter-spacing: -.04em; }
+.echo-exhibit__story > p:last-child { max-width: 390px; margin: 20px 0 0; color: #c7bead; font: 400 20px/1.5 var(--reading); }
+.echo-exhibit__controls { display: flex; align-items: center; gap: 13px; color: #ad9d82; font: 600 9px/1.4 var(--serif); letter-spacing: .13em; }
+.echo-exhibit__controls button { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--line-gold); color: #e8ce9d; font: 22px/1 var(--reading); transition: background .2s,border-color .2s; }
+.echo-exhibit__controls button:hover { background: rgba(214,177,113,.13); border-color: #dbc18f; }
+.echo-moments { display: grid; grid-template-columns: repeat(3,1fr); border: 1px solid rgba(213,185,137,.25); border-top: 0; }
+.echo-moments__item { display: flex; align-items: center; gap: 16px; min-width: 0; min-height: 78px; padding: 18px clamp(20px,2.3vw,32px); border-right: 1px solid var(--line-hairline); color: #b8ab96; text-align: left; transition: background .25s,color .25s; }
+.echo-moments__item:last-child { border-right: 0; }
+.echo-moments__item > span:first-child { color: #b89560; font: 600 10px/1 var(--serif); }
+.echo-moments__item strong { font: 400 20px/1.25 var(--reading); }
+.echo-moments__item > span:last-child { margin-left: auto; color: #c9a76c; opacity: 0; transition: opacity .2s, transform .2s; }
+.echo-moments__item:hover, .echo-moments__item[aria-pressed="true"] { background: rgba(187,137,73,.13); color: #f4e6cf; }
+.echo-moments__item[aria-pressed="true"] > span:last-child, .echo-moments__item:hover > span:last-child { opacity: 1; transform: translate(3px,-3px); }
+@keyframes echo-image { from { opacity:.35; transform:scale(1.055); } to { opacity:1; transform:scale(1); } }
+@keyframes echo-figure { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@keyframes echo-copy { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+/* A tactile layer study that opens the code on demand. */
+.blueprint-panel--shader { display: flex; flex-direction: column; }
+.blueprint-stack { position: relative; display: grid; place-items: center; flex: 1; min-height: 350px; overflow: hidden; perspective: 850px; background: radial-gradient(circle at 50% 48%, rgba(191,133,61,.14), transparent 48%); }
+.blueprint-stack::before, .blueprint-stack::after { content: ''; position: absolute; width: 72%; height: 1px; background: linear-gradient(90deg,transparent,var(--line-gold),transparent); transform: rotate(-18deg); }
+.blueprint-stack::after { transform: rotate(18deg); }
+.blueprint-stack__plane { position: absolute; width: 170px; aspect-ratio: 2 / 3; border: 1px solid rgba(226,189,130,.26); box-shadow: 0 18px 38px rgba(0,0,0,.4); background-position: center; background-repeat: no-repeat; background-size: 100% 100%; transition: transform .55s cubic-bezier(.2,.7,.2,1); }
+.blueprint-stack__plane--back { background-image: url('/archive/ruins.webp'); transform: rotate(-8deg) translate(-45px,-12px); filter: brightness(.7); }
+.blueprint-stack__plane--figure { background-image: url('/archive/knight.webp'); background-size: contain; transform: rotate(-8deg) translate(0,0); }
+.blueprint-stack__plane--frame { background-image: url('/archive/frame.webp'); transform: rotate(-8deg) translate(45px,12px); }
+.blueprint-panel--shader:hover .blueprint-stack__plane--back { transform: rotate(-10deg) translate(-65px,-18px); }
+.blueprint-panel--shader:hover .blueprint-stack__plane--frame { transform: rotate(-6deg) translate(65px,18px); }
+.blueprint-stack__caption { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; color: #b7a580; font: 600 9px/1.4 var(--serif); letter-spacing: .18em; }
+.shader-disclosure { margin-top: 18px; }
+.shader-disclosure summary { display: flex; align-items: center; justify-content: space-between; min-height: 48px; border: 1px solid var(--line-gold); padding: 12px 16px; color: #ead9ba; cursor: pointer; list-style: none; font: 600 10px/1.3 var(--serif); letter-spacing: .12em; text-transform: uppercase; }
+.shader-disclosure summary::-webkit-details-marker { display: none; }
+.shader-disclosure summary:hover, .shader-disclosure[open] summary { background: rgba(183,133,69,.12); border-color: var(--gold-bright); }
+.shader-disclosure summary span { color: var(--gold-bright); font: 20px/1 var(--reading); transition: transform .2s; }
+.shader-disclosure[open] summary span { transform: rotate(45deg); }
+.shader-disclosure .shader-code-box { border-top: 0; max-height: 420px; overflow: auto; }
+@media (max-width: 900px) {
+  .echo-exhibit { grid-template-columns: 1fr; }
+  .echo-exhibit__visual { min-height: 380px; }
+  .echo-exhibit__content { min-height: 340px; }
+}
+@media (max-width: 600px) {
+  .echo-exhibit__visual { min-height: 300px; }
+  .echo-exhibit__content { padding: 27px 24px; min-height: 330px; gap: 28px; }
+  .echo-exhibit__story h3 { font-size: 46px; }
+  .echo-exhibit__story > p:last-child { font-size: 18px; }
+  .echo-moments { grid-template-columns: 1fr; }
+  .echo-moments__item { min-height: 58px; border-right: 0; border-bottom: 1px solid var(--line-hairline); }
+  .echo-moments__item:last-child { border-bottom: 0; }
+  .echo-moments__item strong { font-size: 18px; }
+  .blueprint-panel { padding: 24px 18px; }
+  .blueprint-stack { min-height: 300px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .echo-exhibit__landscape, .echo-exhibit__figure, .echo-exhibit__story { animation: none; }
+  .blueprint-stack__plane, .echo-moments__item, .echo-exhibit__controls button { transition: none; }
+}
