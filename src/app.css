@@ -2885,3 +2885,57 @@ html { scroll-padding-top: 84px; }
   .collection-relic::after { transition: none; }
   .collection-relic.is-entering { transform: none; }
 }
+
+/* Living artwork: separate layers, sparse sparks and low-cost atmospheric light. */
+.collection-relic__art .collection-relic__scene { transform: translate(calc(var(--gallery-shift-x, 0px) * -.45), calc(var(--gallery-shift-y, 0px) * -.45)) scale(1.08); transition: transform .7s ease; }
+.collection-relic__art .collection-relic__subject { transform: translate(var(--gallery-shift-x, 0px), var(--gallery-shift-y, 0px)) scale(1.15); animation: relic-breathe 7s ease-in-out infinite; animation-play-state: paused; }
+.collection-relic:hover .collection-relic__subject { transform: translate(var(--gallery-shift-x, 0px), var(--gallery-shift-y, 0px)) scale(1.2); }
+.collection-relic[data-ambient-active="true"] .collection-relic__subject { animation-play-state: running; }
+.collection-atmosphere, .chronicle-atmosphere { position: absolute; inset: 0; pointer-events: none; }
+.collection-atmosphere { z-index: 1; background: radial-gradient(ellipse at 60% 90%, rgba(233,132,42,.25), transparent 53%); opacity: .45; animation: ember-light 4s ease-in-out infinite alternate; animation-play-state: paused; }
+.collection-relic--cinder .collection-atmosphere { background: radial-gradient(ellipse at 50% 70%, rgba(255,113,24,.42), transparent 62%); }
+.collection-relic[data-ambient-active="true"] .collection-atmosphere { animation-play-state: running; }
+.ambient-particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 2; }
+.ambient-particles i { position: absolute; left: var(--spark-x); bottom: -8px; width: 3px; height: 3px; border-radius: 50%; background: #f4b265; box-shadow: 0 0 8px 2px rgba(246,128,47,.6); opacity: 0; animation: ambient-spark var(--spark-time, 7s) linear infinite; animation-delay: var(--spark-delay, 0s); animation-play-state: paused; }
+.ambient-particles i:nth-child(1) { --spark-x: 18%; --spark-delay: -1s; }
+.ambient-particles i:nth-child(2) { --spark-x: 38%; --spark-delay: -4s; --spark-time: 9s; }
+.ambient-particles i:nth-child(3) { --spark-x: 56%; --spark-delay: -2s; --spark-time: 8s; }
+.ambient-particles i:nth-child(4) { --spark-x: 72%; --spark-delay: -6s; }
+.ambient-particles i:nth-child(5) { --spark-x: 85%; --spark-delay: -3s; --spark-time: 10s; }
+.ambient-particles i:nth-child(6) { --spark-x: 29%; --spark-delay: -7s; --spark-time: 11s; }
+[data-ambient-active="true"] .ambient-particles i, [data-ambient-active="true"] .chronicle-atmosphere { animation-play-state: running; }
+.chronicle-atmosphere { z-index: 1; inset: -12%; background: radial-gradient(ellipse at 35% 85%,rgba(190,181,157,.18),transparent 42%), linear-gradient(125deg, transparent 32%,rgba(238,199,135,.12) 40%, transparent 50%); filter: blur(14px); animation: mist-drift 14s ease-in-out infinite alternate; animation-play-state: paused; }
+.chronicle-scene--3 .chronicle-atmosphere { background: radial-gradient(ellipse at 70% 85%,rgba(240,120,39,.2),transparent 48%); }
+.chronicle-scene__image::after { z-index: 3; }
+.chronicle-scene__image .chronicle-scene__figure { z-index: 1; animation: figure-drift 9s ease-in-out infinite alternate; animation-play-state: paused; }
+.chronicle-scene[data-ambient-active="true"] .chronicle-scene__figure { animation-play-state: running; }
+.chronicle-scene .ambient-particles { opacity: .8; }
+@keyframes relic-breathe { 0%,100% { scale: 1; } 50% { scale: 1.035; } }
+@keyframes ember-light { from { opacity: .3; } to { opacity: .8; } }
+@keyframes ambient-spark { 0% { opacity: 0; transform: translate(0,0); } 15% { opacity: .8; } 85% { opacity: .5; } 100% { opacity: 0; transform: translate(22px,-320px); } }
+@keyframes mist-drift { from { transform: translateX(-4%); opacity: .55; } to { transform: translateX(4%); opacity: .95; } }
+@keyframes figure-drift { from { translate: -5px 0; } to { translate: 7px -4px; } }
+/* Status describes document loading without implying that remote 3D assets have finished. */
+.shrine-loading-status { position: absolute; z-index: 4; top: 14px; right: 14px; margin: 0; max-width: min(270px,70%); padding: 8px 11px; color: #f2e3c9; background: rgba(5,7,6,.86); border: 1px solid rgba(226,192,138,.35); font: 400 14px/1.3 var(--reading); pointer-events: none; }
+.workbench-target-beam { position: absolute; z-index: 5; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent calc(var(--focus-x) - 1px), rgba(247,207,142,.7) var(--focus-x), transparent calc(var(--focus-x) + 1px)), linear-gradient(0deg, transparent calc(100% - var(--focus-y) - 1px), rgba(247,207,142,.7) calc(100% - var(--focus-y)), transparent calc(100% - var(--focus-y) + 1px)); mask-image: radial-gradient(circle 85px at var(--focus-x) var(--focus-y), #000, transparent); animation: target-scan .8s ease-out both; }
+@keyframes target-scan { 0% { opacity: 0; scale: .7; } 35% { opacity: .9; } 100% { opacity: 0; scale: 1.08; } }
+.detail-loupe { display: grid; grid-template-columns: 110px 1fr; min-height: 110px; border: 1px solid rgba(212,184,131,.25); background: #10120f; overflow: hidden; }
+.detail-loupe__crop { position: relative; overflow: hidden; border-right: 1px solid rgba(212,184,131,.2); }
+.detail-loupe__card { position: absolute; width: 160px; height: 240px; transform-origin: top left; transform: translate(-15px,-14px) scale(1.8); }
+.detail-loupe[data-detail="1"] .detail-loupe__card { transform: translate(-150px,-100px) scale(1.8); }
+.detail-loupe[data-detail="2"] .detail-loupe__card { transform: translate(-25px,-255px) scale(1.8); }
+.detail-loupe__caption { padding: 16px; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+.detail-loupe__caption span { color: #d6b580; font: 600 9px/1.4 var(--serif); letter-spacing: .13em; }
+.detail-loupe__caption strong { color: #f1e5d3; font: 400 19px/1.2 var(--reading); }
+.detail-loupe__caption small { color: #c8bba6; font: 14px/1.3 var(--reading); }
+@media (max-width: 600px) { .ambient-particles i:nth-child(n+4) { display: none; } .chronicle-atmosphere { filter: blur(8px); } .detail-loupe { grid-template-columns: 90px 1fr; } }
+@media (prefers-reduced-motion: reduce) {
+  .collection-relic__art .collection-relic__scene, .collection-relic__art .collection-relic__subject, .collection-relic:hover .collection-relic__subject { transform: none; transition: none; animation: none; }
+  .ambient-particles, .chronicle-atmosphere { display: none; }
+  .collection-atmosphere, .chronicle-scene__image .chronicle-scene__figure, .workbench-target-beam { animation: none; }
+  .workbench-target-beam { opacity: 0; }
+}
+
+.shrine-loading-status[data-state="ready"] { animation: status-dismiss 5s ease forwards; }
+@keyframes status-dismiss { 0%,70% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .shrine-loading-status[data-state="ready"] { animation: none; opacity: 0; } }

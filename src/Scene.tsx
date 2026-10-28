@@ -257,6 +257,8 @@ export function Scene() {
   const [studyCompare, setStudyCompare] = useState(false);
   const [hearthKindled, setHearthKindled] = useState(true);
   const [kindlePulse, setKindlePulse] = useState(false);
+  const [shrineState, setShrineState] = useState("loading");
+  const [shrineSlow, setShrineSlow] = useState(false);
   const [enteringRelic, setEnteringRelic] = useState<DarkSoulsHoloCardVariant | null>(null);
   const transitionTimer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(transitionTimer.current), []);
@@ -341,6 +343,24 @@ export function Scene() {
     return () => preference.removeEventListener("change", update);
   }, []);
 
+  // Observe the registered renderer wrapper: ready means its document loaded, not that all 3D assets finished.
+  useEffect(() => {
+    if (!active || !webglAvailable) return;
+    setShrineState("loading");
+    setShrineSlow(false);
+    const viewport = stageWrapRef.current?.querySelector(".vault-viewport");
+    if (!viewport) return;
+    const update = () => {
+      const state = viewport.querySelector(".dark-souls-holo-card")?.getAttribute("data-state") ?? "loading";
+      setShrineState(state);
+    };
+    const observer = new MutationObserver(update);
+    observer.observe(viewport, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-state"] });
+    update();
+    const timer = window.setTimeout(() => setShrineSlow(true), 10000);
+    return () => { observer.disconnect(); window.clearTimeout(timer); };
+  }, [active, webglAvailable, stageVariant]);
+
   // Keep keyboard focus inside the mobile menu while it is open.
   useEffect(() => {
     if (!menuOpen) return;
@@ -378,6 +398,27 @@ export function Scene() {
     setFullscreenAvailable(Boolean(document.fullscreenEnabled));
     document.addEventListener("fullscreenchange", updateFullscreen);
     return () => document.removeEventListener("fullscreenchange", updateFullscreen);
+  }, []);
+
+  // Pause decorative motion when the scene is off screen or the tab is hidden.
+  useEffect(() => {
+    const items = Array.from(document.querySelectorAll<HTMLElement>("[data-ambient]"));
+    const visible = new WeakSet<Element>();
+    const sync = (item: HTMLElement) => { item.dataset.ambientActive = String(!document.hidden && visible.has(item)); };
+    if (typeof IntersectionObserver === "undefined") {
+      items.forEach((item) => { visible.add(item); sync(item); });
+      const update = () => items.forEach(sync);
+      document.addEventListener("visibilitychange", update);
+      return () => document.removeEventListener("visibilitychange", update);
+    }
+    const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+      if (entry.isIntersecting) visible.add(entry.target); else visible.delete(entry.target);
+      sync(entry.target as HTMLElement);
+    }), { rootMargin: "40px" });
+    items.forEach((item) => observer.observe(item));
+    const update = () => items.forEach(sync);
+    document.addEventListener("visibilitychange", update);
+    return () => { observer.disconnect(); document.removeEventListener("visibilitychange", update); };
   }, []);
 
   // Reveal observer with immediate check to prevent stuck invisible elements
@@ -432,14 +473,18 @@ export function Scene() {
   }, []);
 
   function moveCollectionLight(event: ReactPointerEvent<HTMLElement>) {
-    if (event.pointerType !== "mouse" || reducedMotion) return;
+    if (reducedMotion) return;
     const rect = event.currentTarget.getBoundingClientRect();
     event.currentTarget.style.setProperty("--gallery-x", `${((event.clientX - rect.left) / rect.width * 100).toFixed(1)}%`);
     event.currentTarget.style.setProperty("--gallery-y", `${((event.clientY - rect.top) / rect.height * 100).toFixed(1)}%`);
+    event.currentTarget.style.setProperty("--gallery-shift-x", `${(((event.clientX - rect.left) / rect.width - .5) * 14).toFixed(1)}px`);
+    event.currentTarget.style.setProperty("--gallery-shift-y", `${(((event.clientY - rect.top) / rect.height - .5) * 10).toFixed(1)}px`);
   }
   function resetCollectionLight(event: ReactPointerEvent<HTMLElement>) {
     event.currentTarget.style.removeProperty("--gallery-x");
     event.currentTarget.style.removeProperty("--gallery-y");
+    event.currentTarget.style.removeProperty("--gallery-shift-x");
+    event.currentTarget.style.removeProperty("--gallery-shift-y");
   }
 
   function enterExperience() {
@@ -732,12 +777,12 @@ export function Scene() {
             </div>
             <p className="collection-mobile-hint">Swipe to explore the collection <span aria-hidden="true">→</span></p>
             <div className="collection-grid" role="group" aria-label="Relic collection, swipe or use the arrow keys to scroll" tabIndex={0}>
-              <article className={`collection-relic${enteringRelic === "ashen-one" ? " is-entering" : ""}`} data-reveal onPointerMove={moveCollectionLight} onPointerLeave={resetCollectionLight}>
-                <div className="collection-relic__art collection-relic__art--ash" aria-hidden="true"><img className="collection-relic__scene" src="/archive/ruins.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/knight.webp" alt="" loading="lazy" decoding="async" /><span>01 / ASH</span></div>
+              <article className={`collection-relic${enteringRelic === "ashen-one" ? " is-entering" : ""}`} data-reveal data-ambient onPointerDown={moveCollectionLight} onPointerMove={moveCollectionLight} onPointerLeave={resetCollectionLight} onPointerCancel={resetCollectionLight}>
+                <div className="collection-relic__art collection-relic__art--ash" aria-hidden="true"><img className="collection-relic__scene" src="/archive/ruins.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/knight.webp" alt="" loading="lazy" decoding="async" /><span className="collection-relic__number">01 / ASH</span><div className="ambient-particles" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div><div className="collection-atmosphere" /></div>
                 <div className="collection-relic__content"><p>THE UNKINDLED · NO. 001</p><h3>The Ashen One</h3><p>An ember endures among the ruins. Discover the champion and the gilded relic that holds their story.</p><button type="button" onClick={() => openRelic("ashen-one")}>Explore The Ashen One <Arrow diagonal /></button></div>
               </article>
-              <article className={`collection-relic collection-relic--cinder${enteringRelic === "cindermane" ? " is-entering" : ""}`} data-reveal onPointerMove={moveCollectionLight} onPointerLeave={resetCollectionLight}>
-                <div className="collection-relic__art collection-relic__art--cinder" aria-hidden="true"><img className="collection-relic__scene" src="/archive/cindermane/background.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/cindermane/subject.webp" alt="" loading="lazy" decoding="async" /><span>02 / CINDER</span></div>
+              <article className={`collection-relic collection-relic--cinder${enteringRelic === "cindermane" ? " is-entering" : ""}`} data-reveal data-ambient onPointerDown={moveCollectionLight} onPointerMove={moveCollectionLight} onPointerLeave={resetCollectionLight} onPointerCancel={resetCollectionLight}>
+                <div className="collection-relic__art collection-relic__art--cinder" aria-hidden="true"><img className="collection-relic__scene" src="/archive/cindermane/background.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/cindermane/subject.webp" alt="" loading="lazy" decoding="async" /><span className="collection-relic__number">02 / CINDER</span><div className="ambient-particles" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div><div className="collection-atmosphere" /></div>
                 <div className="collection-relic__content"><p>THE BLAZING RELIC · NO. 002</p><h3>Cindermane</h3><p>A different relic burns within the archive. Enter a second scene forged in flame and shadow.</p><button type="button" onClick={() => openRelic("cindermane")}>Explore Cindermane <Arrow diagonal /></button></div>
               </article>
             </div>
@@ -796,8 +841,8 @@ export function Scene() {
             <div className="chronicle-sequence" aria-label="The journey through ash and flame">
               <p className="chronicle-sequence__intro">THE JOURNEY CONTINUES <span aria-hidden="true">↓</span></p>
               {storyMoments.map((moment, index) => (
-                <article className={`chronicle-scene chronicle-scene--${index + 1}`} key={moment.number}>
-                  <div className="chronicle-scene__image" aria-hidden="true"><img src={moment.image} alt="" loading="lazy" decoding="async" />{index === 1 && <img className="chronicle-scene__figure" src="/archive/knight.webp" alt="" loading="lazy" decoding="async" />}</div>
+                <article className={`chronicle-scene chronicle-scene--${index + 1}`} key={moment.number} data-ambient>
+                  <div className="chronicle-scene__image" aria-hidden="true"><img src={moment.image} alt="" loading="lazy" decoding="async" />{index === 1 && <img className="chronicle-scene__figure" src="/archive/knight.webp" alt="" loading="lazy" decoding="async" />}<div className="chronicle-atmosphere" /><div className="ambient-particles" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div></div>
                   <div className="chronicle-scene__copy"><span>CHAPTER {moment.number} / 03</span><h3>{moment.title}</h3><p>{moment.text}</p><button type="button" onClick={() => { setStoryMoment(index); document.querySelector(".echo-exhibit")?.scrollIntoView({ behavior: reducedMotion ? "instant" : "smooth", block: "center" }); }}>Revisit this chapter <Arrow diagonal /></button></div>
                 </article>
               ))}
@@ -883,6 +928,7 @@ export function Scene() {
               {/* Stage Viewport */}
               <div className="vault-viewport">
                 {active && webglAvailable ? (
+                  <>
                   <DarkSoulsHoloCard
                     variant={stageVariant}
                     style={{
@@ -892,6 +938,8 @@ export function Scene() {
                       height: "100%",
                     }}
                   />
+                  <p className="shrine-loading-status" data-state={shrineState} role="status" aria-live="polite">{shrineState === "loading" ? (shrineSlow ? "The shrine is taking longer to load. Check your connection." : "Opening the shrine…") : shrineState === "ready" ? "Shrine opened. Artwork may continue loading." : "Shrine paused while outside the viewport."}</p>
+                  </>
                 ) : (
                   <div className="vault-dormant-altar">
                     <div className="vault-dormant-altar__glow" />
@@ -1045,7 +1093,7 @@ export function Scene() {
 
                   {studyCompare ? <div className="workbench-comparison" aria-label="Front and reverse of The Ashen One card"><figure><ArchiveCard compact /><figcaption>FRONT / PORTRAIT</figcaption></figure><figure><ArchiveCard compact flipped /><figcaption>REVERSE / SIGIL</figcaption></figure></div> : <div className="workbench-card-housing">
                     <ArchiveCard compact flipped={studyFlipped} highlightIndex={studyFlipped ? undefined : selectedDetail} />
-                    {!studyFlipped && <span className="workbench-focus-halo" key={selectedDetail} aria-hidden="true" />}
+                    {!studyFlipped && <><span className="workbench-focus-halo" key={selectedDetail} aria-hidden="true" /><span className="workbench-target-beam" key={`beam-${selectedDetail}`} aria-hidden="true" /></>}
 
                     {/* Interactive Hotspot Reticles */}
                     {!studyFlipped &&
@@ -1074,6 +1122,7 @@ export function Scene() {
                     <span aria-hidden="true">↺</span> Reset view
                   </button>
                 </div>
+                {!studyCompare && !studyFlipped && <div className="detail-loupe" data-detail={selectedDetail} aria-hidden="true"><div className="detail-loupe__crop"><div className="detail-loupe__card"><ArchiveCard compact /></div></div><div className="detail-loupe__caption"><span>MAGNIFIED STUDY / {cardDetails[selectedDetail].number}</span><strong>{cardDetails[selectedDetail].title}</strong><small>A closer look at the selected area</small></div></div>}
                 <div className="workbench-reading" aria-live="polite"><span>INSPECTION / {studyCompare ? "COMPARING FACES" : studyFlipped ? "REVERSE" : `DETAIL ${cardDetails[selectedDetail].number}`}</span><strong>{studyCompare ? "Front and reverse" : studyFlipped ? "The reverse seal" : cardDetails[selectedDetail].title}</strong><small>{studyZoomed ? "Magnified view" : "Select a detail or zoom for a closer look"}</small></div>
               </div>
 
