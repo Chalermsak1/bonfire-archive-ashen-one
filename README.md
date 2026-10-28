@@ -25,7 +25,7 @@ Run `npm run build` to check TypeScript and create the production site in `dist/
 
 - **React 19 + TypeScript + Vite** provide the responsive interface and build tooling.
 - **Three.js r180 and GLSL** render the custom layered hero. The original ThreeUI shrine is hosted in its own document, using the registered component and source files below.
-- The collection uses separate artwork layers, pointer-reactive parallax, ambient light and sparse embers, with touch scrolling on mobile. Scroll-led story scenes add drifting mist and light; decorative animations pause off screen and in hidden tabs, and reduced-motion preferences disable them. The shrine is mounted on demand and unmounted when off-screen or when the page is hidden. The custom hero also pauses its render loop off-screen or in a hidden tab. Scene resources are released on cleanup.
+- The collection uses a museum-inspired display with separate artwork layers, pointer-reactive parallax, ambient light and sparse embers, with touch scrolling on mobile. Selecting a relic transitions to the shrine. Three field notes provide optional interactive details about the Ashen One shrine. Scroll-led story scenes add drifting mist and light; decorative animations pause off screen and in hidden tabs, and reduced-motion preferences disable them. The shrine is mounted on demand and unmounted when off-screen or when the page is hidden. The custom hero also pauses its render loop off-screen or in a hidden tab. Scene resources are released on cleanup.
 - Artwork for the shell is extracted from the registered source assets. The site is an unofficial fan-made showcase; Dark Souls and related artwork belong to their respective owners. ThreeUI supplies the original shrine component.
 
 ### Design trade-offs

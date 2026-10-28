@@ -2939,3 +2939,47 @@ html { scroll-padding-top: 84px; }
 .shrine-loading-status[data-state="ready"] { animation: status-dismiss 5s ease forwards; }
 @keyframes status-dismiss { 0%,70% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .shrine-loading-status[data-state="ready"] { animation: none; opacity: 0; } }
+
+/* An editorial reliquary: artwork has room to breathe above each object's plaque. */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.hero-editorial__art::before { content: ''; position: absolute; inset: 8% 0 12%; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at 50% 48%, rgba(222,158,86,.17), transparent 58%); filter: blur(15px); }
+.hero-editorial__lead { color: #e4d9c8; max-width: 420px; }
+.hero-editorial__note { color: #cfc1aa; font-size: 11px; }
+.collection-heading { margin-bottom: 50px; }
+.collection-heading > p { color: #dbd0bd; }
+.collection-grid { gap: clamp(18px,2vw,30px); }
+.collection-relic { grid-template-columns: 1fr; min-height: 0; background: #11120f; }
+.collection-relic__art { min-height: clamp(340px, 34vw, 500px); }
+.collection-relic__art::after { background: linear-gradient(0deg, #11120f 0%, transparent 45%), linear-gradient(90deg,rgba(0,0,0,.15),transparent 45%); }
+.collection-relic__art .collection-relic__scene { object-position: center; }
+.collection-relic__art .collection-relic__subject { width: 95%; left: 3%; object-fit: contain; object-position: center bottom; }
+.collection-relic__art .collection-relic__number { z-index: 4; top: 24px; left: 26px; color: #f2dec0; font-size: 10px; }
+.collection-pedestal { position: absolute; z-index: 1; left: 12%; right: 12%; bottom: 12%; height: 12%; border: 1px solid rgba(235,197,139,.25); border-radius: 50%; background: radial-gradient(ellipse,rgba(215,135,61,.27),transparent 72%); transform: perspective(300px) rotateX(58deg); box-shadow: 0 5px 35px rgba(230,141,64,.12); }
+.collection-relic__content { min-height: 220px; padding: 10px clamp(26px,3vw,44px) 34px; align-items: flex-start; }
+.collection-relic__content h3 { font-size: clamp(37px,3.5vw,54px); margin: 13px 0; }
+.collection-relic__content > p:not(:first-child) { max-width: 440px; color: #ded2c0; font-size: 18px; line-height: 1.5; }
+.collection-relic__content button { margin-top: auto; font-size: 11px; }
+.collection-footnote { color: #c4b59d; font-size: 10px; }
+.relic-passage { position: fixed; z-index: 10000; inset: 0; display: grid; place-items: center; pointer-events: none; background: radial-gradient(circle at 50% 50%,rgba(149,85,37,.3),#070806 62%); opacity: 0; animation: passage 1.05s ease both; }
+.relic-passage--cindermane { background: radial-gradient(circle at 50% 50%,rgba(183,62,20,.38),#090605 62%); }
+.relic-passage span { color: #e6bc7c; font-size: 30px; text-shadow: 0 0 28px #cf7e36; }
+@keyframes passage { 0% { opacity: 0; } 31%,55% { opacity: 1; } 100% { opacity: 0; } }
+.shrine-discovery { display: grid; grid-template-columns: .85fr 1.15fr; gap: clamp(28px,5vw,70px); margin-top: clamp(60px,7vw,100px); padding: clamp(28px,4vw,58px); border: 1px solid rgba(212,184,131,.24); background: radial-gradient(ellipse at 90% 0%, rgba(168,107,49,.14),transparent 50%),#11120f; }
+.shrine-discovery__intro > span, .shrine-secret > span { color: #dfbd85; font: 600 10px/1.5 var(--serif); letter-spacing: .16em; }
+.shrine-discovery__intro h3 { color: #f5ecdc; margin: 18px 0; font: 400 clamp(38px,4vw,62px)/1.05 var(--reading); }
+.shrine-discovery__intro h3 em { color: #d9b982; font-weight: 400; }
+.shrine-discovery__intro p, .shrine-secret p { color: #ded1bd; font: 19px/1.5 var(--reading); }
+.shrine-symbols { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.shrine-symbols button { min-width: 0; min-height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; border: 1px solid rgba(212,184,131,.25); color: #e3c38f; background: #0b0d0b; transition: background .25s,border-color .25s; }
+.shrine-symbols button:hover, .shrine-symbols button[aria-pressed="true"] { border-color: #e3c38f; background: rgba(148,101,48,.18); }
+.shrine-symbols button > span { font-size: 25px; line-height: 1; }
+.shrine-symbols small { color: #f1e1c7; font: 600 10px/1.4 var(--serif); letter-spacing: .06em; }
+.shrine-secret { min-height: 170px; padding: 24px 0 0; animation: dossier-reveal .45s ease both; }
+.shrine-secret h4 { color: #f2e7d4; margin: 10px 0; font: 400 30px/1.15 var(--reading); }
+.shrine-secret p { max-width: 530px; margin: 0; }
+.shrine-secret a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: #f1d19b; border-bottom: 1px solid #bca071; font: 600 10px/1.4 var(--serif); text-transform: uppercase; letter-spacing: .08em; }
+.shrine-secret a .arrow-icon { width: 16px; }
+@media (min-width: 701px) and (max-width: 1000px) { .collection-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .collection-relic__art { min-height: 340px; } }
+@media (max-width: 700px) { .shrine-discovery { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .collection-relic__art { min-height: 320px; } .collection-relic__content { min-height: 215px; padding: 6px 24px 28px; } .collection-relic__content h3 { font-size: 40px; } .collection-relic__content > p:not(:first-child) { font-size: 17px; } .shrine-discovery { padding: 25px 20px; } .shrine-symbols button { min-height: 90px; } .shrine-symbols small { font-size: 9px; } }
+@media (prefers-reduced-motion: reduce) { .relic-passage, .shrine-secret { animation: none; } .shrine-symbols button { transition: none; } }

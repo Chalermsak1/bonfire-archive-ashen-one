@@ -93,6 +93,18 @@ const storyMoments = [
   { number: "03", label: "The last ember", title: "The fire awaits.", text: "A coiled sword and the glow of a bonfire mark a place to pause. Step closer, turn the card, and discover the story in its details.", image: "/archive/ashen-cathedral.jpg" },
 ];
 
+const storySceneLines = [
+  "Stone arches and empty halls hold the traces of a world that has outlived its age. Follow the light through the ruins and discover what still remains.",
+  "Within the frame, armor and landscape are held on separate layers. As the relic turns, the figure seems to move against the world behind it.",
+  "At the hearth, a sword and a circle of fire offer a moment of stillness. Enter the shrine and look closer at the relic in the light of the embers.",
+];
+
+const shrineSecrets = [
+  { symbol: "⚔", label: "The coiled sword", title: "A blade at rest.", text: "At the heart of the shrine, the sword anchors the composition and draws the eye toward the fire." },
+  { symbol: "✦", label: "The bonfire", title: "A spark in the dark.", text: "Warm candlelight and drifting embers give the scene its quiet contrast to the cool darkness surrounding it." },
+  { symbol: "◉", label: "The dark sign", title: "The mark on the reverse.", text: "Turn the relic to discover its circular seal. Its restrained design offers a counterpoint to the ornate front." },
+];
+
 const cardDetails = [
   {
     number: "01",
@@ -257,11 +269,13 @@ export function Scene() {
   const [studyCompare, setStudyCompare] = useState(false);
   const [hearthKindled, setHearthKindled] = useState(true);
   const [kindlePulse, setKindlePulse] = useState(false);
+  const [shrineSecret, setShrineSecret] = useState(0);
   const [shrineState, setShrineState] = useState("loading");
   const [shrineSlow, setShrineSlow] = useState(false);
   const [enteringRelic, setEnteringRelic] = useState<DarkSoulsHoloCardVariant | null>(null);
   const transitionTimer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(transitionTimer.current), []);
+  const transitionEndTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => { window.clearTimeout(transitionTimer.current); window.clearTimeout(transitionEndTimer.current); }, []);
 
   const experienceRef = useRef<HTMLElement>(null);
   const stageWrapRef = useRef<HTMLDivElement>(null);
@@ -498,8 +512,13 @@ export function Scene() {
     if (enteringRelic) return;
     setStageVariant(variant);
     setEnteringRelic(variant);
-    const delay = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 380;
-    transitionTimer.current = window.setTimeout(() => { setEnteringRelic(null); enterExperience(); }, delay);
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) { setEnteringRelic(null); enterExperience(); return; }
+    transitionTimer.current = window.setTimeout(() => {
+      if (webglAvailable) setActive(true);
+      experienceRef.current?.scrollIntoView({ behavior: "instant", block: "start" });
+    }, 350);
+    transitionEndTimer.current = window.setTimeout(() => setEnteringRelic(null), 1050);
   }
 
   function openFullscreen() {
@@ -551,6 +570,9 @@ export function Scene() {
       <a className="skip-link" href="#main">
         Skip to content
       </a>
+
+      {enteringRelic && <div className={`relic-passage relic-passage--${enteringRelic}`} aria-hidden="true"><span>✦</span></div>}
+      <div className="sr-only" role="status" aria-live="polite">{enteringRelic ? `Entering ${enteringRelic === "ashen-one" ? "The Ashen One" : "Cindermane"} shrine` : ""}</div>
 
       {/* Atmospheric Global Grain & Vignette */}
       <div className="global-vignette" aria-hidden="true" />
@@ -708,14 +730,14 @@ export function Scene() {
             <div className="hero-editorial__copy" data-reveal>
               <p className="hero-editorial__eyebrow"><span /> THE ASHEN COLLECTION <span className="hero-editorial__edition">NO. 001</span></p>
               <h1 id="hero-title">The Ashen <em>One.</em></h1>
-              <p className="hero-editorial__lead">A relic of ash, light, and memory. Turn the card, follow the embers, and discover what remains.</p>
+              <p className="hero-editorial__lead">A relic of ash, light, and memory. Turn the card and discover the world within.</p>
               <div className="hero-editorial__actions">
                 <button className="button-luxury button-relic-gold" type="button" onClick={enterExperience}>
                   <span>Explore the shrine</span><Arrow />
                 </button>
                 <a className="hero-editorial__story" href="#chronicle">Discover the story <span aria-hidden="true">↓</span></a>
               </div>
-              <p className="hero-editorial__note"><span aria-hidden="true">✦</span> An interactive digital collectible</p>
+              <p className="hero-editorial__note"><span aria-hidden="true">✦</span> Drag or tap the card to explore</p>
             </div>
             <div className="hero-editorial__art" ref={heroArtRef} data-light={lightMode}>
               <div className="hero-editorial__halo" aria-hidden="true" />
@@ -773,16 +795,16 @@ export function Scene() {
           <div className="relic-collection__inner">
             <div className="collection-heading" data-reveal>
               <div><p className="collection-eyebrow">✦ &nbsp; THE ARCHIVE / 002 RELICS</p><h2 id="collection-title">Two tales. <em>One flame.</em></h2></div>
-              <p>Choose a relic and step into its world. Each opens an interactive ThreeUI shrine for you to explore.</p>
+              <p>Two relics, two worlds. Choose an artifact and step into its interactive shrine.</p>
             </div>
             <p className="collection-mobile-hint">Swipe to explore the collection <span aria-hidden="true">→</span></p>
             <div className="collection-grid" role="group" aria-label="Relic collection, swipe or use the arrow keys to scroll" tabIndex={0}>
               <article className={`collection-relic${enteringRelic === "ashen-one" ? " is-entering" : ""}`} data-reveal data-ambient onPointerDown={moveCollectionLight} onPointerMove={moveCollectionLight} onPointerLeave={resetCollectionLight} onPointerCancel={resetCollectionLight}>
-                <div className="collection-relic__art collection-relic__art--ash" aria-hidden="true"><img className="collection-relic__scene" src="/archive/ruins.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/knight.webp" alt="" loading="lazy" decoding="async" /><span className="collection-relic__number">01 / ASH</span><div className="ambient-particles" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div><div className="collection-atmosphere" /></div>
+                <div className="collection-relic__art collection-relic__art--ash" aria-hidden="true"><img className="collection-relic__scene" src="/archive/ruins.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/knight.webp" alt="" loading="lazy" decoding="async" /><span className="collection-relic__number">01 / ASH</span><div className="ambient-particles" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div><div className="collection-atmosphere" /><div className="collection-pedestal" /></div>
                 <div className="collection-relic__content"><p>THE UNKINDLED · NO. 001</p><h3>The Ashen One</h3><p>An ember endures among the ruins. Discover the champion and the gilded relic that holds their story.</p><button type="button" onClick={() => openRelic("ashen-one")}>Explore The Ashen One <Arrow diagonal /></button></div>
               </article>
               <article className={`collection-relic collection-relic--cinder${enteringRelic === "cindermane" ? " is-entering" : ""}`} data-reveal data-ambient onPointerDown={moveCollectionLight} onPointerMove={moveCollectionLight} onPointerLeave={resetCollectionLight} onPointerCancel={resetCollectionLight}>
-                <div className="collection-relic__art collection-relic__art--cinder" aria-hidden="true"><img className="collection-relic__scene" src="/archive/cindermane/background.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/cindermane/subject.webp" alt="" loading="lazy" decoding="async" /><span className="collection-relic__number">02 / CINDER</span><div className="ambient-particles" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div><div className="collection-atmosphere" /></div>
+                <div className="collection-relic__art collection-relic__art--cinder" aria-hidden="true"><img className="collection-relic__scene" src="/archive/cindermane/background.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/cindermane/subject.webp" alt="" loading="lazy" decoding="async" /><span className="collection-relic__number">02 / CINDER</span><div className="ambient-particles" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div><div className="collection-atmosphere" /><div className="collection-pedestal" /></div>
                 <div className="collection-relic__content"><p>THE BLAZING RELIC · NO. 002</p><h3>Cindermane</h3><p>A different relic burns within the archive. Enter a second scene forged in flame and shadow.</p><button type="button" onClick={() => openRelic("cindermane")}>Explore Cindermane <Arrow diagonal /></button></div>
               </article>
             </div>
@@ -843,7 +865,7 @@ export function Scene() {
               {storyMoments.map((moment, index) => (
                 <article className={`chronicle-scene chronicle-scene--${index + 1}`} key={moment.number} data-ambient>
                   <div className="chronicle-scene__image" aria-hidden="true"><img src={moment.image} alt="" loading="lazy" decoding="async" />{index === 1 && <img className="chronicle-scene__figure" src="/archive/knight.webp" alt="" loading="lazy" decoding="async" />}<div className="chronicle-atmosphere" /><div className="ambient-particles" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div></div>
-                  <div className="chronicle-scene__copy"><span>CHAPTER {moment.number} / 03</span><h3>{moment.title}</h3><p>{moment.text}</p><button type="button" onClick={() => { setStoryMoment(index); document.querySelector(".echo-exhibit")?.scrollIntoView({ behavior: reducedMotion ? "instant" : "smooth", block: "center" }); }}>Revisit this chapter <Arrow diagonal /></button></div>
+                  <div className="chronicle-scene__copy"><span>CHAPTER {moment.number} / 03</span><h3>{moment.title}</h3><p>{storySceneLines[index]}</p><button type="button" onClick={() => { setStoryMoment(index); document.querySelector(".echo-exhibit")?.scrollIntoView({ behavior: reducedMotion ? "instant" : "smooth", block: "center" }); }}>Revisit this chapter <Arrow diagonal /></button></div>
                 </article>
               ))}
             </div>
@@ -996,6 +1018,10 @@ export function Scene() {
                   </div>
                 </div>
               </div>
+            </div>
+            <div className="shrine-discovery" aria-labelledby="shrine-discovery-title" data-reveal>
+              <div className="shrine-discovery__intro"><span>THE SHRINE / FIELD NOTES</span><h3 id="shrine-discovery-title">Look closer.<br /><em>Find the meaning.</em></h3><p>Select a symbol to uncover a detail of the Ashen One shrine.</p></div>
+              <div className="shrine-discovery__body"><div className="shrine-symbols" role="group" aria-label="Explore shrine details">{shrineSecrets.map((secret, index) => <button type="button" key={secret.label} aria-pressed={shrineSecret === index} onClick={() => setShrineSecret(index)}><span aria-hidden="true">{secret.symbol}</span><small>{secret.label}</small></button>)}</div><div className="shrine-secret" aria-live="polite" aria-atomic="true" key={shrineSecret}><span>FIELD NOTE / 0{shrineSecret + 1}</span><h4>{shrineSecrets[shrineSecret].title}</h4><p>{shrineSecrets[shrineSecret].text}</p>{shrineSecret === 2 && <a href="#anatomy" onClick={() => { setStudyCompare(false); setStudyFlipped(true); }}>Inspect the reverse in the workbench <Arrow diagonal /></a>}</div></div>
             </div>
           </div>
         </section>
