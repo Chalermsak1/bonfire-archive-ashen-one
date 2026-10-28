@@ -595,7 +595,7 @@ export function Scene() {
             <div className="hero-editorial__art" ref={heroArtRef} data-light={lightMode}>
               <div className="hero-editorial__halo" aria-hidden="true" />
               <div className="hero-relic-canvas-wrap">
-                <HeroRelic3D flipped={heroFlipped} onFlip={flipHero} lightMode={lightMode} autoSpin={autoSpin} />
+                <HeroRelic3D flipped={heroFlipped} onFlip={flipHero} lightMode={lightMode} autoSpin={autoSpin} onReady={() => window.dispatchEvent(new Event("bonfire:ready"))} />
               </div>
               <div className="hero-editorial__controls">
                 <span>DRAG TO ROTATE · TAP TO FLIP</span>

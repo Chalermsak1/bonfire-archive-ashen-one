@@ -6,15 +6,18 @@ interface HeroRelic3DProps {
   onFlip: () => void;
   lightMode: "ember" | "moon" | "prism";
   autoSpin: boolean;
+  onReady?: () => void;
   className?: string;
   onFpsUpdate?: (fps: number) => void;
 }
 
-export function HeroRelic3D({ flipped, onFlip, lightMode, autoSpin, className = "", onFpsUpdate }: HeroRelic3DProps) {
+export function HeroRelic3D({ flipped, onFlip, lightMode, autoSpin, onReady, className = "", onFpsUpdate }: HeroRelic3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fpsCallbackRef = useRef(onFpsUpdate);
   fpsCallbackRef.current = onFpsUpdate;
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
   const lightModeRef = useRef(lightMode);
   const autoSpinRef = useRef(autoSpin);
   lightModeRef.current = lightMode;
@@ -82,6 +85,7 @@ export function HeroRelic3D({ flipped, onFlip, lightMode, autoSpin, className = 
       renderer.toneMappingExposure = 1.08;
     } catch {
       setWebglSupported(false);
+      onReadyRef.current?.();
       return;
     }
 
@@ -94,6 +98,7 @@ export function HeroRelic3D({ flipped, onFlip, lightMode, autoSpin, className = 
     const manager = new THREE.LoadingManager();
     manager.onLoad = () => {
       setIsLoaded(true);
+      onReadyRef.current?.();
     };
 
     const textureLoader = new THREE.TextureLoader(manager);

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="is-entering">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,10 +11,62 @@
     <link rel="preload" as="image" href="/archive/frame.webp" />
     <link rel="preload" as="font" type="font/woff2" href="/archive/cinzel.woff2" crossorigin />
     <link rel="preload" as="font" type="font/woff2" href="/archive/eb-garamond.woff2" crossorigin />
+    <link rel="stylesheet" href="/entrance.css" />
     <title>Bonfire Archive — The Ashen One</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="entrance-loader" class="entrance" role="dialog" aria-modal="true" aria-labelledby="entrance-title">
+      <div class="entrance__scene" aria-hidden="true"></div>
+      <div class="entrance__embers" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="entrance__brand"><span aria-hidden="true">✦</span> BONFIRE <em>ARCHIVE</em></div>
+      <div class="entrance__center">
+        <div class="entrance__sigil" aria-hidden="true">
+          <span class="entrance__ring entrance__ring--outer"></span><span class="entrance__ring entrance__ring--inner"></span>
+          <svg class="entrance__sword" viewBox="0 0 120 210" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M60 4 54 25 56 128 60 142 64 128 66 25 60 4Z" fill="url(#blade)" stroke="#d7b978" stroke-width="1.2"/>
+            <path d="M58 15 60 125 62 15" stroke="#fff1c6" stroke-opacity=".65"/>
+            <path d="M35 134 Q45 143 60 138 Q75 143 85 134 L82 145 Q71 149 64 147 L63 176 68 181 60 188 52 181 57 176 56 147 Q49 149 38 145Z" fill="#8f6b37" stroke="#e3c48a" stroke-width="1.4"/>
+            <path d="M44 183 Q29 195 20 197 M76 183 Q91 195 100 197" stroke="#8e5628" stroke-width="2" stroke-linecap="round"/>
+            <defs><linearGradient id="blade" x1="54" y1="0" x2="69" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#29251e"/><stop offset=".48" stop-color="#e4d1a5"/><stop offset="1" stop-color="#4b402b"/></linearGradient></defs>
+          </svg>
+          <span class="entrance__flame entrance__flame--one"></span><span class="entrance__flame entrance__flame--two"></span><span class="entrance__glow"></span>
+        </div>
+        <p class="entrance__eyebrow">THE ASHEN COLLECTION · NO. 001</p>
+        <h1 id="entrance-title">The fire <em>awakens.</em></h1>
+        <p id="entrance-status" class="entrance__status" role="status" aria-live="polite">Preparing the relic and its light</p>
+        <div class="entrance__progress" role="progressbar" aria-label="Loading the archive"><span></span></div>
+      </div>
+      <div class="entrance__bottom"><span>AN INTERACTIVE RELIC</span><button type="button" id="entrance-skip">Enter now <span aria-hidden="true">↗</span></button><span>THE EMBER REMAINS</span></div>
+    </div>
+    <div id="root" inert></div>
+    <script>
+      (() => {
+        const overlay = document.getElementById('entrance-loader');
+        const root = document.getElementById('root');
+        const status = document.getElementById('entrance-status');
+        const started = performance.now();
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        let dismissed = false;
+        let readyTimer;
+        const finish = (ready = false) => {
+          if (dismissed) return;
+          dismissed = true;
+          clearTimeout(fallbackTimer);
+          clearTimeout(readyTimer);
+          status.textContent = ready ? 'The archive is ready' : 'Entering the archive';
+          root.removeAttribute('inert');
+          document.documentElement.classList.remove('is-entering');
+          overlay.classList.add('entrance--leaving');
+          window.setTimeout(() => overlay.remove(), reduced ? 0 : 650);
+        };
+        const fallbackTimer = window.setTimeout(() => finish(), 8000);
+        document.getElementById('entrance-skip').addEventListener('click', () => finish());
+        window.addEventListener('bonfire:ready', () => {
+          const remaining = reduced ? 0 : Math.max(0, 1400 - (performance.now() - started));
+          readyTimer = window.setTimeout(() => finish(true), remaining);
+        }, { once: true });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
