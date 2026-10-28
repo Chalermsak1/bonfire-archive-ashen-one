@@ -82,7 +82,7 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
     // 2. Scene & Camera setup - closer camera distance (~20% larger card presence)
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-    camera.position.set(0, 0, 7.45);
+    camera.position.set(0, 0, 9.5);
 
     // 3. Texture Loading Manager for guaranteed seamless appearance
     const manager = new THREE.LoadingManager();
@@ -194,12 +194,10 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
 
     // Layer 3: Ornate Engraved Gold Frame Plane (Layered Depth Z = 0.08)
     // Higher metalness on the frame to emphasize gold relief and filigree edges
-    const frameMat = new THREE.MeshStandardMaterial({
+    const frameMat = new THREE.MeshBasicMaterial({
       map: frameTex,
       transparent: true,
       alphaTest: 0.02,
-      roughness: 0.22,
-      metalness: 0.90,
     });
     const framePlane = new THREE.Mesh(new THREE.PlaneGeometry(cardWidth, cardHeight), frameMat);
     framePlane.position.set(0, 0, 0.08);
@@ -281,23 +279,19 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
     cardGroup.add(backGroup);
 
     // Back Plate Texture
-    const backMat = new THREE.MeshStandardMaterial({
+    const backMat = new THREE.MeshBasicMaterial({
       map: backTex,
-      roughness: 0.42,
-      metalness: 0.7,
     });
     const backPlane = new THREE.Mesh(new THREE.PlaneGeometry(cardWidth, cardHeight), backMat);
     backPlane.position.set(0, 0, 0.04);
     backGroup.add(backPlane);
 
     // Sigil Emblem (Emissive Ember Glow)
-    const sigilMat = new THREE.MeshStandardMaterial({
+    const sigilMat = new THREE.MeshBasicMaterial({
       map: sigilTex,
       transparent: true,
-      roughness: 0.2,
-      metalness: 0.8,
-      emissive: new THREE.Color("#e26a1d"),
-      emissiveIntensity: 0.5,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
     });
     const sigilPlane = new THREE.Mesh(new THREE.PlaneGeometry(cardWidth * 0.82, cardHeight * 0.56), sigilMat);
     sigilPlane.position.set(0, 0.25, 0.06);
@@ -647,23 +641,24 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
     }
   }, [onFlip]);
 
-  if (!webglSupported) {
-    // Graceful fallback to museum-grade HTML/CSS card if WebGL unavailable
-    return (
-      <div className={`hero-relic-fallback${className ? ` ${className}` : ""}`}>
-        <div className="hero-relic-fallback__card">
-          <img
-            src={flipped ? "/archive/ashen-one-cinder.webp" : "/archive/ashen-one-card.webp"}
-            alt={flipped ? "The Ashen One Relic (Cinder Seal Reverse)" : "The Ashen One Relic Card"}
-            className="hero-relic-fallback__img"
-            loading="eager"
-          />
-          <div className="hero-relic-fallback__badge">
-            <span>{flipped ? "SACRIFICIAL SEAL // REVERSE EMBOSS" : "KILN OF THE FIRST FLAME // ARCHIVE RELIC"}</span>
-          </div>
+  const placeholder = (
+    <div className="hero-card-placeholder" aria-hidden="true">
+      {flipped ? (
+        <div className="hero-card-placeholder__back"><img src="/archive/sigil.webp" alt="" /><span>THE EMBER REMAINS</span></div>
+      ) : (
+        <div className="hero-card-placeholder__front">
+          <div className="hero-card-placeholder__world" />
+          <img className="hero-card-placeholder__knight" src="/archive/knight.webp" alt="" />
+          <img className="hero-card-placeholder__frame" src="/archive/frame.webp" alt="" />
+          <span className="hero-card-placeholder__name">THE ASHEN ONE</span>
+          <span className="hero-card-placeholder__footer">LINK THE FIRE</span>
         </div>
-      </div>
-    );
+      )}
+    </div>
+  );
+
+  if (!webglSupported) {
+    return <div className={`hero-relic-fallback${className ? ` ${className}` : ""}`}>{placeholder}</div>;
   }
 
   return (
@@ -677,7 +672,12 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
+      onPointerCancel={() => {
+        dragRef.current.isDragging = false;
+        dragRef.current.moved = false;
+        physicsRef.current.targetTiltX = 0;
+        physicsRef.current.targetTiltY = 0;
+      }}
       onPointerLeave={handlePointerLeave}
       onKeyDown={handleKeyDown}
       style={{
@@ -687,10 +687,10 @@ export function HeroRelic3D({ flipped, onFlip, className = "", onFpsUpdate }: He
         display: "grid",
         placeItems: "center",
         cursor: "grab",
-        touchAction: "none",
-        outline: "none",
+        touchAction: "pan-y",
       }}
     >
+      {!isLoaded && placeholder}
       <canvas
         ref={canvasRef}
         style={{

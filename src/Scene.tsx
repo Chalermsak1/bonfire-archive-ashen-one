@@ -92,22 +92,22 @@ const cardDetails = [
     number: "01",
     tag: "METALLURGIC RELIEF",
     title: "Engraved Gilded Border",
-    spec: "High-Relief Chased Gold Leaf · Chassis Frame",
-    text: "A weathered wrought-iron chassis edged in heavy antique gold relief. Ornate filigree frames the heraldry with the permanence of an ancient reliquary artifact.",
+    spec: "Ornate frame · Gold-toned finish",
+    text: "An ornate border surrounds the figure, with warm highlights that give the frame a weathered, gilded appearance.",
   },
   {
     number: "02",
     tag: "SPATIAL ENTITY",
     title: "The Champion of Ash",
-    spec: "Quad-Plane Parallax Layer Separation",
-    text: "The champion stands severed from the kiln ruins behind him. Physical separation of the visual layers produces natural optical parallax upon every tilt.",
+    spec: "Layered artwork · Parallax",
+    text: "The figure and the ruins sit on separate layers, creating a sense of depth as the card turns.",
   },
   {
     number: "03",
     tag: "DIFFRACTION GRATING",
     title: "Prismatic Foil & Embers",
-    spec: "Three.js r180 GLSL Spectral Dispersion",
-    text: "Micro-etched specular highlights sweep across the metallic leafing in real time, reacting dynamically to the viewer's gaze and the flickering hearth.",
+    spec: "Interactive light · GLSL shader",
+    text: "A shifting highlight moves across the surface as you explore the card.",
   },
 ];
 
@@ -148,11 +148,12 @@ export function Scene() {
   const [selectedDetail, setSelectedDetail] = useState(0);
   const [hearthKindled, setHearthKindled] = useState(true);
   const [kindlePulse, setKindlePulse] = useState(false);
-  const [liveFps, setLiveFps] = useState<number | null>(null);
 
   const experienceRef = useRef<HTMLElement>(null);
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLElement>(null);
+  const menuToggleRef = useRef<HTMLButtonElement>(null);
 
   // Check WebGL availability
   useEffect(() => {
@@ -198,14 +199,32 @@ export function Scene() {
     };
   }, []);
 
-  // Close menu on Escape
+  // Keep keyboard focus inside the mobile menu while it is open.
   useEffect(() => {
     if (!menuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const items = Array.from(menuRef.current?.querySelectorAll<HTMLElement>("a[href], button:not([disabled])") ?? []);
+    items[0]?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMenuOpen(false);
+      if (event.key !== "Tab" || items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+      menuToggleRef.current?.focus({ preventScroll: true });
+    };
   }, [menuOpen]);
 
   // Fullscreen change listener
@@ -318,7 +337,7 @@ export function Scene() {
               <span className="reliquary-brand__name">
                 BONFIRE <em>ARCHIVE</em>
               </span>
-              <span className="reliquary-brand__badge">RELIC № 001 · ASHEN ONE</span>
+              
             </div>
           </a>
 
@@ -330,7 +349,7 @@ export function Scene() {
               aria-current={activeSection === "chronicle" || activeSection === "story" ? "location" : undefined}
             >
               <span className="reliquary-nav__roman">I</span>
-              <span className="reliquary-nav__text">The Chronicle</span>
+              <span className="reliquary-nav__text">The story</span>
             </a>
             <span className="reliquary-nav__divider" aria-hidden="true">✦</span>
             <a
@@ -339,7 +358,7 @@ export function Scene() {
               aria-current={activeSection === "sanctuary" || activeSection === "experience" ? "location" : undefined}
             >
               <span className="reliquary-nav__roman">II</span>
-              <span className="reliquary-nav__text">Sanctuary Vault</span>
+              <span className="reliquary-nav__text">The relic</span>
             </a>
             <span className="reliquary-nav__divider" aria-hidden="true">✦</span>
             <a
@@ -357,25 +376,14 @@ export function Scene() {
               aria-current={activeSection === "foundry" || activeSection === "craft" ? "location" : undefined}
             >
               <span className="reliquary-nav__roman">IV</span>
-              <span className="reliquary-nav__text">The Foundry</span>
+              <span className="reliquary-nav__text">The build</span>
             </a>
           </nav>
 
           {/* Actions & Controls */}
           <div className="reliquary-header__actions">
-            <button
-              type="button"
-              className="reliquary-action-btn"
-              onClick={handleKindleHearth}
-              title="Kindle the Bonfire"
-              aria-label="Kindle the Bonfire Flame"
-            >
-              <span className="reliquary-action-btn__icon" aria-hidden="true">🔥</span>
-              <span className="reliquary-action-btn__text">Kindle Flame</span>
-            </button>
-
             <button className="button-luxury button-relic-gold" type="button" onClick={enterExperience}>
-              <span>Enter Shrine</span>
+              <span>Enter the shrine</span>
               <Arrow />
             </button>
 
@@ -383,6 +391,7 @@ export function Scene() {
             <button
               className="menu-toggle"
               type="button"
+              ref={menuToggleRef}
               aria-expanded={menuOpen}
               aria-controls="mobile-nav"
               aria-label={menuOpen ? "Close menu" : "Open navigation menu"}
@@ -397,7 +406,7 @@ export function Scene() {
 
       {/* Fullscreen Mobile Drawer */}
       {menuOpen && (
-        <nav className="mobile-nav-drawer" id="mobile-nav" aria-label="Mobile navigation">
+        <nav className="mobile-nav-drawer" id="mobile-nav" ref={menuRef} aria-label="Mobile navigation">
           <div className="mobile-nav-drawer__header">
             <span className="mobile-nav-drawer__title">ARCHIVE CODEX</span>
             <button
@@ -412,11 +421,11 @@ export function Scene() {
           <div className="mobile-nav-drawer__links">
             <a href="#chronicle" onClick={() => setMenuOpen(false)}>
               <span className="mobile-nav-drawer__roman">I</span>
-              <span>The Chronicle</span>
+              <span>The story</span>
             </a>
             <a href="#sanctuary" onClick={() => setMenuOpen(false)}>
               <span className="mobile-nav-drawer__roman">II</span>
-              <span>Sanctuary Vault</span>
+              <span>The relic</span>
             </a>
             <a href="#anatomy" onClick={() => setMenuOpen(false)}>
               <span className="mobile-nav-drawer__roman">III</span>
@@ -459,127 +468,32 @@ export function Scene() {
             ))}
           </div>
 
-          <div className="hero-monument__stage">
-            {/* Monumental Top Inscription */}
-            <div className="hero-monument__crest" data-reveal>
-              <div className="hero-monument__kicker">
-                <span className="kicker-gem">✦</span>
-                <span>SACRED RELIC OF THE KILN · CATALOGUE NO. 001</span>
-                <span className="kicker-gem">✦</span>
+          <div className="hero-editorial">
+            <div className="hero-editorial__copy" data-reveal>
+              <p className="hero-editorial__eyebrow"><span /> THE ASHEN COLLECTION <span className="hero-editorial__edition">NO. 001</span></p>
+              <h1 id="hero-title">The Ashen <em>One.</em></h1>
+              <p className="hero-editorial__lead">A relic of ash, light, and memory. Turn the card, follow the embers, and discover what remains.</p>
+              <div className="hero-editorial__actions">
+                <button className="button-luxury button-relic-gold" type="button" onClick={enterExperience}>
+                  <span>Explore the shrine</span><Arrow />
+                </button>
+                <a className="hero-editorial__story" href="#chronicle">Discover the story <span aria-hidden="true">↓</span></a>
               </div>
-              <h1 id="hero-title" className="hero-monument__title">
-                <span className="hero-monument__title-name">THE ASHEN ONE</span>
-                <span className="hero-monument__title-tagline">CHAMPION OF THE UNKINDLED</span>
-              </h1>
+              <p className="hero-editorial__note"><span aria-hidden="true">✦</span> An interactive digital collectible</p>
             </div>
-
-            {/* Central Altar Grid */}
-            <div className="hero-monument__altar-grid">
-              {/* Left Flanking Codex */}
-              <aside className="hero-codex hero-codex--left" data-reveal>
-                <div className="hero-codex__header">
-                  <span className="hero-codex__tag">CODEX INSCRIPTION // LORE</span>
-                  <span className="hero-codex__ornament">◈</span>
-                </div>
-                <p className="hero-codex__narrative">
-                  When the First Flame flickered to dying embers, an Unkindled champion rose from cemetery ash. Bound to link the fire or claim the dark, his visage is captured in physical gold relief and living specular light.
-                </p>
-                <div className="hero-codex__meta">
-                  <span className="hero-codex__label">PROVENANCE</span>
-                  <strong className="hero-codex__value">Kiln of the First Flame</strong>
-                </div>
-              </aside>
-
-              {/* Centerpiece: Floating 3D Relic Card */}
-              <div className="hero-relic-centerpiece">
-                {/* Ancient Dais Geometry Background */}
-                <div className="altar-dais" aria-hidden="true">
-                  <svg className="altar-dais__svg" viewBox="0 0 500 500" fill="none">
-                    <circle cx="250" cy="250" r="230" stroke="var(--line-gold)" strokeWidth="1" strokeDasharray="4 6" opacity="0.4" />
-                    <circle cx="250" cy="250" r="190" stroke="var(--line-gold-bright)" strokeWidth="1" opacity="0.5" />
-                    <circle cx="250" cy="250" r="130" stroke="var(--line-hairline)" strokeWidth="1" strokeDasharray="2 4" />
-                    <path d="M250 10v480M10 250h480" stroke="var(--line-gold)" strokeWidth="0.5" opacity="0.3" />
-                  </svg>
-                  <div className="altar-dais__reflection" />
-                </div>
-
-                {/* 3D WebGL Spatial Relic */}
-                <div className="hero-relic-canvas-wrap">
-                  <HeroRelic3D
-                    flipped={heroFlipped}
-                    onFlip={() => setHeroFlipped((f) => !f)}
-                    onFpsUpdate={setLiveFps}
-                  />
-                </div>
-
-                {/* Tactile Altar Controls Deck */}
-                <div className="altar-controls" role="group" aria-label="Relic Altar Controls">
-                  <button
-                    type="button"
-                    className="altar-control-btn"
-                    onClick={() => setHeroFlipped((f) => !f)}
-                    aria-label={heroFlipped ? "Flip to Front Face" : "Flip to Reverse Face"}
-                  >
-                    <span className="altar-control-btn__icon" aria-hidden="true">⟲</span>
-                    <span>{heroFlipped ? "Inspect Front Face" : "Reveal Sacred Seal"}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="altar-control-btn altar-control-btn--kindle"
-                    onClick={handleKindleHearth}
-                    aria-label="Awaken Hearth Light"
-                  >
-                    <span className="altar-control-btn__icon" aria-hidden="true">🔥</span>
-                    <span>Awaken Fire</span>
-                  </button>
-                </div>
-                <div className="hero-relic-hint">
-                  <span>TOUCH &amp; DRAG TO ORBIT · TILT TO REVEAL SPECULAR</span>
-                </div>
+            <div className="hero-editorial__art">
+              <div className="hero-editorial__halo" aria-hidden="true" />
+              <div className="hero-relic-canvas-wrap">
+                <HeroRelic3D flipped={heroFlipped} onFlip={() => setHeroFlipped((f) => !f)} />
               </div>
-
-              {/* Right Flanking Telemetry */}
-              <aside className="hero-codex hero-codex--right" data-reveal>
-                <div className="hero-codex__header">
-                  <span className="hero-codex__tag">SANCTUARY TELEMETRY</span>
-                  <span className="hero-codex__ornament">✦</span>
-                </div>
-                <ul className="hero-telemetry-list">
-                  <li className="hero-telemetry-item">
-                    <span className="hero-telemetry-label">SANCTUARY STATUS</span>
-                    <strong className="hero-telemetry-value hero-telemetry-value--active">
-                      <i className="status-dot status-dot--pulse" />
-                      {liveFps ? `KINDLED (${liveFps} FPS MEASURED)` : "KINDLED (60 FPS TARGET)"}
-                    </strong>
-                  </li>
-                  <li className="hero-telemetry-item">
-                    <span className="hero-telemetry-label">CHASSIS RELIEF</span>
-                    <strong className="hero-telemetry-value">24K Gilded Leaf Filigree</strong>
-                  </li>
-                  <li className="hero-telemetry-item">
-                    <span className="hero-telemetry-label">OPTICAL PARALLAX</span>
-                    <strong className="hero-telemetry-value">4 Discrete Spatial Planes</strong>
-                  </li>
-                  <li className="hero-telemetry-item">
-                    <span className="hero-telemetry-label">REVERSE EMBOSS</span>
-                    <strong className="hero-telemetry-value">Dark Sign Sacrificial Seal</strong>
-                  </li>
-                </ul>
-              </aside>
+              <div className="hero-editorial__controls">
+                <span>DRAG TO ROTATE · TAP TO FLIP</span>
+                <button type="button" onClick={() => setHeroFlipped((f) => !f)} aria-pressed={heroFlipped}>
+                  <span aria-hidden="true">⟲</span> {heroFlipped ? "Show front" : "Turn card"}
+                </button>
+              </div>
             </div>
-
-            {/* Bottom Actions & Descent */}
-            <div className="hero-monument__actions" data-reveal>
-              <button className="button-luxury button-relic-gold" type="button" onClick={enterExperience}>
-                <span>Enter 3D Sanctuary Vault</span>
-                <Arrow />
-              </button>
-              <a className="button-luxury button-hollow" href="#chronicle">
-                <span>Descend to Chronicle</span>
-                <span className="button-arrow" aria-hidden="true">↓</span>
-              </a>
-            </div>
+            <div className="hero-editorial__foot"><span>AN INTERACTIVE RELIC</span><span>EDITION 001 / 001</span></div>
           </div>
         </section>
 
@@ -619,7 +533,7 @@ export function Scene() {
                 </div>
                 <h3 className="codex-fragment__heading">The Forging at the Kiln</h3>
                 <p className="codex-fragment__text">
-                  <span className="drop-cap">W</span>hen the kingdom dissolved into cinder, the High Priests of the Kiln cast this reliquary into molten gold. It is not an imitation of the champion, but a physical vessel holding the visual memory of his arrival at the shrine.
+                  <span className="drop-cap">W</span>hen the flame begins to fade, the Ashen One rises from the ashes. This digital relic captures that journey in a frame of worn gold, shadow, and light.
                 </p>
                 <div className="codex-fragment__rule" />
               </article>
@@ -632,7 +546,7 @@ export function Scene() {
                 </div>
                 <h3 className="codex-fragment__heading">The Coiled Sword Sanctuary</h3>
                 <p className="codex-fragment__text">
-                  Enshrined beside the coiled blade and bone-ash offerings, the card drinks the ambient heat of the hearth. Turn it in your hands: the light bends across the champion's breastplate while the ruins behind remain forever shrouded in perpetual dusk.
+                  A coiled sword and candlelight give the card a place in the world. Turn the relic to watch the light move across its surface and discover the mark on its reverse.
                 </p>
                 <div className="codex-fragment__rule" />
               </article>
@@ -647,15 +561,15 @@ export function Scene() {
               <div className="reliquary-ledger__grid">
                 <div className="reliquary-ledger__cell">
                   <span className="reliquary-ledger__num">I</span>
-                  <span className="reliquary-ledger__label">PHYSICAL DIMENSION</span>
-                  <strong className="reliquary-ledger__val">63.5 × 88.9 MM (STANDARD TAROT)</strong>
-                  <span className="reliquary-ledger__sub">ARCHIVAL RATIO 1:1.4</span>
+                  <span className="reliquary-ledger__label">FORMAT</span>
+                  <strong className="reliquary-ledger__val">DIGITAL COLLECTIBLE</strong>
+                  <span className="reliquary-ledger__sub">AN INTERACTIVE EXPERIENCE</span>
                 </div>
                 <div className="reliquary-ledger__cell">
                   <span className="reliquary-ledger__num">II</span>
-                  <span className="reliquary-ledger__label">LEAFING &amp; CHASSIS</span>
-                  <strong className="reliquary-ledger__val">24K WEATHERED GOLD LEAF</strong>
-                  <span className="reliquary-ledger__sub">ENGRAVED WROUGHT IRON</span>
+                  <span className="reliquary-ledger__label">ARTWORK</span>
+                  <strong className="reliquary-ledger__val">GOLD-TONED FRAME</strong>
+                  <span className="reliquary-ledger__sub">ORNATE DIGITAL ARTWORK</span>
                 </div>
                 <div className="reliquary-ledger__cell">
                   <span className="reliquary-ledger__num">III</span>
@@ -666,7 +580,7 @@ export function Scene() {
                 <div className="reliquary-ledger__cell">
                   <span className="reliquary-ledger__num">IV</span>
                   <span className="reliquary-ledger__label">SACRIFICIAL SEAL</span>
-                  <strong className="reliquary-ledger__val">DARK SIGN VOLCANIC STAMP</strong>
+                  <strong className="reliquary-ledger__val">GOLDEN REVERSE SIGIL</strong>
                   <span className="reliquary-ledger__sub">"THE EMBER REMAINS"</span>
                 </div>
               </div>
@@ -707,27 +621,25 @@ export function Scene() {
               <div className="vault-toolbar">
                 <div className="vault-toolbar__status">
                   <i className={`status-dot${active ? " status-dot--live" : ""}`} aria-hidden="true" />
-                  <span>{active ? "SHRINE ENGINE LIVE · 60 FPS" : "SANCTUARY VAULT · DORMANT"}</span>
+                  <span>{active ? "3D SCENE ACTIVE" : "3D SCENE READY"}</span>
                 </div>
 
                 {/* Token Variant Selector */}
-                <div className="vault-tokens" role="tablist" aria-label="Select relic variant">
+                <div className="vault-tokens" role="group" aria-label="Select relic variant">
                   <button
                     type="button"
-                    role="tab"
                     className={`vault-token-btn${stageVariant === "ashen-one" ? " is-active" : ""}`}
-                    aria-selected={stageVariant === "ashen-one"}
-                    onClick={() => setStageVariant("ashen-one")}
+                    aria-pressed={stageVariant === "ashen-one"}
+                    onClick={() => { setStageVariant("ashen-one"); if (webglAvailable) setActive(true); }}
                   >
                     <span className="vault-token-btn__num">01</span>
                     <span>THE ASHEN ONE</span>
                   </button>
                   <button
                     type="button"
-                    role="tab"
                     className={`vault-token-btn${stageVariant === "cindermane" ? " is-active" : ""}`}
-                    aria-selected={stageVariant === "cindermane"}
-                    onClick={() => setStageVariant("cindermane")}
+                    aria-pressed={stageVariant === "cindermane"}
+                    onClick={() => { setStageVariant("cindermane"); if (webglAvailable) setActive(true); }}
                   >
                     <span className="vault-token-btn__num">02</span>
                     <span>CINDERMANE EDITION</span>
@@ -738,7 +650,7 @@ export function Scene() {
                 <div className="vault-toolbar__actions">
                   {active && (
                     <button className="vault-action-btn" type="button" onClick={stopExperience}>
-                      Pause GPU
+                      Close scene
                     </button>
                   )}
                   {active && fullscreenAvailable && (
@@ -773,8 +685,8 @@ export function Scene() {
                       <h3>The hearth awaits your spark.</h3>
                       <p>
                         {webglAvailable
-                          ? "Engage the full 60 FPS real-time Three.js shrine engine. Freely orbit, zoom into the metallic filigree, and observe true GLSL holographic dispersion."
-                          : "Your browser environment cannot initialize WebGL2. Explore the curatorial anatomy analysis below."}
+                          ? "Enter the scene to turn the card, explore the shrine, and watch the light move across its surface."
+                          : "Your browser cannot display the 3D scene. Explore the card details below instead."}
                       </p>
                       {webglAvailable && (
                         <button className="button-luxury button-relic-gold" type="button" onClick={() => setActive(true)}>
@@ -792,29 +704,29 @@ export function Scene() {
                 <div className="vault-hud__cell">
                   <span className="vault-hud__icon" aria-hidden="true">↗</span>
                   <div className="vault-hud__info">
-                    <strong>Hover &amp; Move</strong>
-                    <span>Specular Reflection Tracking</span>
+                    <strong>Move pointer</strong>
+                    <span>Tilt &amp; light</span>
                   </div>
                 </div>
                 <div className="vault-hud__cell">
                   <span className="vault-hud__icon" aria-hidden="true">⟲</span>
                   <div className="vault-hud__info">
-                    <strong>Click &amp; Drag</strong>
-                    <span>360° Free Spatial Orbit</span>
+                    <strong>Drag</strong>
+                    <span>Turn the card</span>
                   </div>
                 </div>
                 <div className="vault-hud__cell">
                   <span className="vault-hud__icon" aria-hidden="true">◇</span>
                   <div className="vault-hud__info">
-                    <strong>Double-Tap / F</strong>
-                    <span>Flip to Dark Sign Seal</span>
+                    <strong>Double-click / F</strong>
+                    <span>Flip the card</span>
                   </div>
                 </div>
                 <div className="vault-hud__cell">
                   <span className="vault-hud__icon" aria-hidden="true">⊕</span>
                   <div className="vault-hud__info">
-                    <strong>Scroll Wheel</strong>
-                    <span>Optical Macro Zoom</span>
+                    <strong>Scroll wheel</strong>
+                    <span>Zoom in &amp; out</span>
                   </div>
                 </div>
               </div>
@@ -837,7 +749,7 @@ export function Scene() {
                 The Conservator's <em>Workbench.</em>
               </h2>
               <p className="anatomy-studio__lead">
-                Every millimetre was forged with tactical precision. Select a focal reticle below to analyze the metallurgic relief, spatial parallax, and GLSL dispersion.
+                Select a detail to take a closer look at the border, the figure, and the light on the card.
               </p>
             </div>
 
@@ -855,11 +767,11 @@ export function Scene() {
                       </div>
                       <h3 className="dossier-entry__title">The Sigil of the Unkindled</h3>
                       <p className="dossier-entry__desc">
-                        Branded directly into worn volcanic basalt. Etched in luminous antique gold along the lower margin, "THE EMBER REMAINS" serves as the eternal covenant of Lothric.
+                        A circular sigil and a quiet inscription complete the reverse side of the digital relic.
                       </p>
                       <div className="dossier-entry__meta">
-                        <span>METRIC: 180 GSM ARCHIVAL STONE</span>
-                        <span>IMPRINT: SACRIFICIAL DARK SIGN</span>
+                        <span>SIDE: REVERSE</span>
+                        <span>DETAIL: GOLDEN SIGIL</span>
                       </div>
                     </div>
                   ) : (
@@ -872,7 +784,7 @@ export function Scene() {
                       <p className="dossier-entry__desc">{cardDetails[selectedDetail].text}</p>
                       <div className="dossier-entry__meta">
                         <span>SPECIFICATION: {cardDetails[selectedDetail].spec}</span>
-                        <span>AUTHENTICATION: CURATORIAL SPECIMEN NO. 001</span>
+                        <span>DIGITAL RELIC · NO. 001</span>
                       </div>
                     </div>
                   )}
@@ -926,14 +838,13 @@ export function Scene() {
               {/* Right Column: Focal Detail Selectors */}
               <div className="workbench-focals" data-reveal>
                 <div className="workbench-focals__title">SELECT FOCAL RETICLE</div>
-                <div className="focal-list" role="tablist">
+                <div className="focal-list" role="group" aria-label="Choose a card detail">
                   {cardDetails.map((detail, index) => (
                     <button
                       key={detail.number}
                       type="button"
-                      role="tab"
-                      className={`focal-item${!studyFlipped && selectedDetail === index ? " is-selected" : ""}`}
-                      aria-selected={!studyFlipped && selectedDetail === index}
+                        className={`focal-item${!studyFlipped && selectedDetail === index ? " is-selected" : ""}`}
+                      aria-pressed={!studyFlipped && selectedDetail === index}
                       onClick={() => {
                         setStudyFlipped(false);
                         setSelectedDetail(index);
@@ -950,9 +861,8 @@ export function Scene() {
 
                   <button
                     type="button"
-                    role="tab"
                     className={`focal-item focal-item--sigil${studyFlipped ? " is-selected" : ""}`}
-                    aria-selected={studyFlipped}
+                    aria-pressed={studyFlipped}
                     onClick={() => setStudyFlipped(true)}
                   >
                     <div className="focal-item__num">✦</div>
@@ -984,7 +894,7 @@ export function Scene() {
                 The Anatomy of an <em>Illusion.</em>
               </h2>
               <p className="foundry-header__desc">
-                An optical illusion grounded in physical mathematics. The card calculates real-time Fresnel micro-facet reflection, isolates 4 spatial depths, and adheres strictly to GPU thermal budgets.
+                Explore how layered artwork, lighting, and interactive motion bring the relic to life.
               </p>
             </div>
 
@@ -1001,7 +911,7 @@ export function Scene() {
                     <span className="pipeline-step__num">01</span>
                     <div className="pipeline-step__content">
                       <strong>Asset Deconstruction</strong>
-                      <p>Wrought iron border, knight champion, and ruins background decoupled into transparent high-DPI lossless WebP planes.</p>
+                      <p>The frame, figure, and ruined landscape are separated into layers to create depth.</p>
                     </div>
                   </div>
                   <div className="pipeline-connector">↓</div>
@@ -1009,7 +919,7 @@ export function Scene() {
                     <span className="pipeline-step__num">02</span>
                     <div className="pipeline-step__content">
                       <strong>Quad-Plane Depth Projection</strong>
-                      <p>Planes positioned at Z = -0.05, +0.03, +0.08, and +0.09. Pointer velocity calculates spring damping to produce natural parallax.</p>
+                      <p>Planes positioned at Z = -0.05, +0.03, +0.08, and +0.09. Motion and easing create a sense of parallax as the card turns.</p>
                     </div>
                   </div>
                   <div className="pipeline-connector">↓</div>
@@ -1025,7 +935,7 @@ export function Scene() {
                     <span className="pipeline-step__num">04</span>
                     <div className="pipeline-step__content">
                       <strong>ACES Tone Mapping &amp; Culling</strong>
-                      <p>IntersectionObserver halts RAF loop when scrolled out of view. Preserves laptop battery and maintains locked 60 FPS.</p>
+                      <p>The scene pauses rendering when it is outside the viewport to reduce unnecessary work.</p>
                     </div>
                   </div>
                 </div>
@@ -1035,7 +945,7 @@ export function Scene() {
               <div className="blueprint-panel blueprint-panel--shader" data-reveal>
                 <div className="blueprint-panel__header">
                   <span className="blueprint-panel__tag">02 // GLSL FRAGMENT SHADER</span>
-                  <span className="blueprint-panel__grid-coord">SRC: /shaders/holo.frag</span>
+                  <span className="blueprint-panel__grid-coord">SRC: HeroRelic3D.tsx</span>
                 </div>
                 <div className="shader-code-box">
                   <pre className="shader-code">
@@ -1080,38 +990,14 @@ void main() {
               </div>
             </div>
 
-            {/* Hardware Telemetry Bar */}
-            <div className="telemetry-gauges" data-reveal>
-              <div className="gauge-cell">
-                <span className="gauge-cell__label">RUNTIME FRAME RATE</span>
-                <strong className="gauge-cell__val">{liveFps ? `${liveFps}.0 FPS` : "60.0 FPS TARGET"}</strong>
-                <span className="gauge-cell__status">{liveFps ? "LIVE BROWSER MEASUREMENT" : "MEASURING RUNTIME"}</span>
-              </div>
-              <div className="gauge-cell">
-                <span className="gauge-cell__label">GEOMETRY SPECIFICATION</span>
-                <strong className="gauge-cell__val">180 / ~1.2K VERTICES</strong>
-                <span className="gauge-cell__status">STATIC MODEL SPECIFICATION</span>
-              </div>
-              <div className="gauge-cell">
-                <span className="gauge-cell__label">GPU DRAW PASSES</span>
-                <strong className="gauge-cell__val">~10 BATCHED</strong>
-                <span className="gauge-cell__status">MEASURED SCENE PIPELINE</span>
-              </div>
-              <div className="gauge-cell">
-                <span className="gauge-cell__label">ARCHIVE TEXTURE FOOTPRINT</span>
-                <strong className="gauge-cell__val">1.31 MB TOTAL</strong>
-                <span className="gauge-cell__status">5 WEBP ASSETS (MEASURED DISK BYTES)</span>
-              </div>
-            </div>
-
             {/* Certified Immutable Repository Block */}
             <a className="verified-repo-block" href={repositoryUrl} target="_blank" rel="noopener noreferrer" data-reveal>
               <div className="verified-repo-block__info">
                 <div className="verified-repo-block__badge">
                   <span className="git-dot" />
-                  <span>VERIFIED GITHUB REGISTRY</span>
+                  <span>OPEN SOURCE</span>
                 </div>
-                <strong className="verified-repo-block__title">Inspect the complete source codebase on GitHub</strong>
+                <strong className="verified-repo-block__title">Explore the source on GitHub</strong>
                 <code className="verified-repo-block__cmd">git clone https://github.com/Chalermsak1/bonfire-archive-ashen-one.git</code>
               </div>
               <div className="verified-repo-block__arrow">
@@ -1124,7 +1010,7 @@ void main() {
         {/* ====================================================================
             7. SECTION 05 — CEREMONIAL BONFIRE PYRE & CRYPT CONCLUSION
             ==================================================================== */}
-        <section className="crypt-conclusion" id="pyre" aria-labelledby="closing-title">
+        <section className={`crypt-conclusion${kindlePulse ? " crypt-conclusion--pulse" : ""}`} id="pyre" aria-labelledby="closing-title">
           <div className="crypt-conclusion__glow" aria-hidden="true" />
           <div className="crypt-conclusion__embers" aria-hidden="true">
             {Array.from({ length: 16 }, (_, i) => (
