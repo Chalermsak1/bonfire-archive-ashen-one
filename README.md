@@ -29,6 +29,7 @@ Bonfire Archive is an unofficial fan-inspired web programming project, designed 
 | **The shrine** | Explore the original ThreeUI scene and reveal field notes about the Ashen One shrine. |
 | **The workbench** | Select details, zoom, flip the card, compare both faces, and reset the view. |
 | **Behind the build** | Explore the layers and shader that make the hero card feel dimensional. |
+| **The last ember** | Kindle the closing bonfire and return to the shrine or source code. |
 
 ## A quick tour
 

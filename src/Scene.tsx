@@ -267,7 +267,7 @@ export function Scene() {
   const [selectedDetail, setSelectedDetail] = useState(0);
   const [studyZoomed, setStudyZoomed] = useState(false);
   const [studyCompare, setStudyCompare] = useState(false);
-  const [hearthKindled, setHearthKindled] = useState(true);
+  const [hearthKindled, setHearthKindled] = useState(false);
   const [kindlePulse, setKindlePulse] = useState(false);
   const [shrineSecret, setShrineSecret] = useState(0);
   const [shrineState, setShrineState] = useState("loading");
@@ -1015,8 +1015,8 @@ export function Scene() {
                 <div className="vault-hud__cell">
                   <span className="vault-hud__icon" aria-hidden="true">⊕</span>
                   <div className="vault-hud__info">
-                    <strong>Scroll wheel</strong>
-                    <span>Zoom in &amp; out</span>
+                    <strong className="hud-desktop">Scroll wheel</strong><span className="hud-desktop">Zoom in &amp; out</span>
+                    <strong className="hud-touch">Look closer</strong><span className="hud-touch">Use the Workbench below</span>
                   </div>
                 </div>
               </div>
@@ -1349,7 +1349,7 @@ void main() {
         {/* ====================================================================
             7. SECTION 05 — CEREMONIAL BONFIRE PYRE & CRYPT CONCLUSION
             ==================================================================== */}
-        <section className={`crypt-conclusion${kindlePulse ? " crypt-conclusion--pulse" : ""}`} id="pyre" aria-labelledby="closing-title">
+        <section className={`crypt-conclusion${kindlePulse ? " crypt-conclusion--pulse" : ""}`} id="pyre" data-kindled={hearthKindled} data-ambient aria-labelledby="closing-title">
           <div className="crypt-conclusion__glow" aria-hidden="true" />
           <div className="crypt-conclusion__embers" aria-hidden="true">
             {Array.from({ length: 16 }, (_, i) => (
@@ -1363,27 +1363,28 @@ void main() {
               type="button"
               className="bonfire-altar-btn"
               onClick={handleKindleHearth}
-              aria-label="Kindle the Sacred Bonfire"
+              aria-label={hearthKindled ? "Rekindle the bonfire" : "Kindle the bonfire"}
             >
-              <div className="bonfire-altar-btn__flame">
-                <FlameIcon kindled={hearthKindled} />
-              </div>
-              <span className="bonfire-altar-btn__hint">CLICK TO KINDLE THE BONFIRE</span>
+              <span className="last-ember-art" aria-hidden="true">
+                <svg viewBox="0 0 160 230" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M80 10 73 33 76 154 80 169 84 154 87 33 80 10Z" fill="#42372a" stroke="#d1ae74" strokeWidth="1.5"/><path d="M80 18v133M48 158q32 14 64 0M62 164l2 11 16-3 16 3 2-11M76 174v26l-5 5 9 8 9-8-5-5v-26" stroke="#d1ae74" strokeWidth="2" strokeLinecap="round"/><path d="M39 211q41-19 82 0M48 218q32-13 64 0" stroke="#ac764a" strokeWidth="2" strokeLinecap="round"/></svg>
+                <span className="last-ember-art__flame last-ember-art__flame--one" /><span className="last-ember-art__flame last-ember-art__flame--two" /><span className="last-ember-art__spark">✦</span>
+              </span>
+              <span className="bonfire-altar-btn__hint">{hearthKindled ? "THE EMBER GLOWS · KINDLE AGAIN" : "KINDLE THE LAST EMBER"}</span>
             </button>
 
             <div className="section-kicker">
               <span className="kicker-gem">✦</span>
-              <span>The Sanctuary Remains Rekindled</span>
+              <span>{hearthKindled ? "The Sanctuary Remains Rekindled" : "A final spark awaits"}</span>
             </div>
 
             <h2 id="closing-title" className="crypt-conclusion__title">
-              Even when the fire fades, <br />
-              <em>the memory of ash endures.</em>
+              {hearthKindled ? <>Even when the fire fades, <br /><em>the memory of ash endures.</em></> : <>A spark remains <br /><em>in the darkness.</em></>}
             </h2>
 
+            <p className="last-ember-status" aria-live="polite">{hearthKindled ? "The last ember is alight. The archive awaits your return." : "Select the ember to rekindle the fire."}</p>
             <div className="crypt-conclusion__actions">
               <button className="button-luxury button-relic-gold" type="button" onClick={enterExperience}>
-                <span>Ascend to the Relic</span>
+                <span>Return to the shrine</span>
                 <Arrow />
               </button>
               <a className="button-luxury button-hollow" href={repositoryUrl} target="_blank" rel="noopener noreferrer">
