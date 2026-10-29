@@ -263,6 +263,7 @@ export function Scene() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [heroFullscreen, setHeroFullscreen] = useState(false);
   const [storyMoment, setStoryMoment] = useState(0);
+  const [collectionIndex, setCollectionIndex] = useState(0);
   const [studyFlipped, setStudyFlipped] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState(0);
   const [studyZoomed, setStudyZoomed] = useState(false);
@@ -277,6 +278,7 @@ export function Scene() {
   const transitionEndTimer = useRef<number | undefined>(undefined);
   useEffect(() => () => { window.clearTimeout(transitionTimer.current); window.clearTimeout(transitionEndTimer.current); }, []);
 
+  const collectionRef = useRef<HTMLDivElement>(null);
   const experienceRef = useRef<HTMLElement>(null);
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
@@ -499,6 +501,27 @@ export function Scene() {
     event.currentTarget.style.removeProperty("--gallery-y");
     event.currentTarget.style.removeProperty("--gallery-shift-x");
     event.currentTarget.style.removeProperty("--gallery-shift-y");
+  }
+
+  function moveCollection(index: number) {
+    const gallery = collectionRef.current;
+    const cards = gallery?.querySelectorAll<HTMLElement>(".collection-relic");
+    const card = cards?.[index];
+    if (!gallery || !card) return;
+    const left = gallery.scrollLeft + card.getBoundingClientRect().left - gallery.getBoundingClientRect().left;
+    gallery.scrollTo({ left, behavior: reducedMotion ? "instant" : "smooth" });
+  }
+
+  function updateCollectionIndex() {
+    const gallery = collectionRef.current;
+    if (!gallery) return;
+    const cards = Array.from(gallery.querySelectorAll<HTMLElement>(".collection-relic"));
+    const left = gallery.getBoundingClientRect().left;
+    let closest = 0;
+    for (let i = 1; i < cards.length; i++) {
+      if (Math.abs(cards[i].getBoundingClientRect().left - left) < Math.abs(cards[closest].getBoundingClientRect().left - left)) closest = i;
+    }
+    setCollectionIndex((current) => current === closest ? current : closest);
   }
 
   function enterExperience() {
@@ -776,7 +799,7 @@ export function Scene() {
               </div>
               </details>
             </div>
-            <div className="hero-editorial__foot"><span>AN INTERACTIVE RELIC</span><span>EDITION 001 / 001</span></div>
+            <div className="hero-editorial__foot"><span>AN INTERACTIVE RELIC</span><span>EDITION 001 / 001</span><a href="#collection">SCROLL TO EXPLORE <span aria-hidden="true">↓</span></a></div>
           </div>
         </section>
 
@@ -799,8 +822,11 @@ export function Scene() {
               <div><p className="collection-eyebrow">✦ &nbsp; THE ARCHIVE / 002 RELICS</p><h2 id="collection-title">Two tales. <em>One flame.</em></h2></div>
               <p>Two relics, two worlds. Choose an artifact and step into its interactive shrine.</p>
             </div>
-            <p className="collection-mobile-hint">Swipe to explore the collection <span aria-hidden="true">→</span></p>
-            <div className="collection-grid" role="group" aria-label="Relic collection, swipe or use the arrow keys to scroll" tabIndex={0}>
+            <div className="collection-navigation" aria-label="Collection navigation">
+              <div><span className="collection-navigation__eyebrow">THE RELIQUARY</span><p>Swipe or use the arrows to explore</p></div>
+              <div className="collection-navigation__controls"><button type="button" aria-label="Previous relic" aria-disabled={collectionIndex === 0} onClick={() => { if (collectionIndex !== 0) moveCollection(0); }}>←</button><span aria-live="polite">0{collectionIndex + 1} <i>/</i> 02</span><button type="button" aria-label="Next relic" aria-disabled={collectionIndex === 1} onClick={() => { if (collectionIndex !== 1) moveCollection(1); }}>→</button></div>
+            </div>
+            <div className="collection-grid" ref={collectionRef} onScroll={updateCollectionIndex} role="group" aria-label="Relic collection, swipe or use the arrow keys to scroll" tabIndex={0}>
               <article className={`collection-relic${enteringRelic === "ashen-one" ? " is-entering" : ""}`} data-reveal data-ambient onPointerDown={moveCollectionLight} onPointerMove={moveCollectionLight} onPointerLeave={resetCollectionLight} onPointerCancel={resetCollectionLight}>
                 <div className="collection-relic__art collection-relic__art--ash"><img className="collection-relic__scene" src="/archive/ruins.webp" alt="" loading="lazy" decoding="async" /><img className="collection-relic__subject" src="/archive/knight.webp" alt="" loading="lazy" decoding="async" /><span className="collection-relic__number" aria-hidden="true">01 / ASH</span><div className="ambient-particles" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div><div className="collection-atmosphere" /><div className="collection-pedestal" /><button className="collection-art-action" type="button" onClick={() => openRelic("ashen-one")} aria-label="Explore The Ashen One shrine"><span aria-hidden="true">ENTER THE SHRINE ↗</span></button></div>
                 <div className="collection-relic__content"><p>THE UNKINDLED · NO. 001</p><h3>The Ashen One</h3><p>An ember endures among the ruins. Discover the champion and the gilded relic that holds their story.</p><button type="button" onClick={() => openRelic("ashen-one")}>Explore The Ashen One <Arrow diagonal /></button></div>

@@ -24,7 +24,7 @@ Bonfire Archive is an unofficial fan-inspired web programming project, designed 
 | Stop | What you can do |
 | :--- | :--- |
 | **The hero** | Drag or tap the 3D card, turn it over, change its light, and optionally enable ambient sound. |
-| **The collection** | Choose The Ashen One or Cindermane and enter the corresponding interactive shrine. |
+| **The collection** | Choose The Ashen One or Cindermane and enter the corresponding interactive shrine; on mobile, swipe or use the collection arrows. |
 | **The chronicle** | Explore three illustrated chapters, either by selecting a chapter or scrolling through the story. |
 | **The shrine** | Explore the original ThreeUI scene and reveal field notes about the Ashen One shrine. |
 | **The workbench** | Select details, zoom, flip the card, compare both faces, and reset the view. |
